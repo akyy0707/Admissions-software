@@ -6,19 +6,14 @@ import java.io.File;
 
 import com.tuyensinh.BUS.*;
 
-public class ImportExcelFrm extends JFrame {
+public class ImportExcel extends JPanel {
 
     private JButton btnImport;
     private JProgressBar progressBar;
 
     private DiemThiBUS bus = new DiemThiBUS();
 
-    public ImportExcelFrm() {
-        setTitle("Import Điểm Excel");
-        setSize(400, 200);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-
+    public ImportExcel() { // ✅ FIX constructor
         btnImport = new JButton("Chọn file Excel");
         progressBar = new JProgressBar();
 
