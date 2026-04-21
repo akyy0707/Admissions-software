@@ -1,6 +1,6 @@
-package com.tuyensinh.dto;
+package com.tuyensinh.DTO;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "xt_nganh_tohop")

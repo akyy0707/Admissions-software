@@ -1,7 +1,7 @@
-package com.tuyensinh.bus;
+package com.tuyensinh.BUS;
 
-import com.tuyensinh.dao.NganhDAO;
-import com.tuyensinh.dto.NganhDTO;
+import com.tuyensinh.DAO.NganhDAO;
+import com.tuyensinh.DTO.NganhDTO;
 import java.util.List;
 
 public class NganhBUS {

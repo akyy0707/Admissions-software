@@ -1,7 +1,7 @@
-package com.tuyensinh.bus;
+package com.tuyensinh.BUS;
 
-import com.tuyensinh.dao.ToHopDAO;
-import com.tuyensinh.dto.ToHopDTO;
+import com.tuyensinh.DAO.ToHopDAO;
+import com.tuyensinh.DTO.ToHopDTO;
 import java.util.List;
 
 public class ToHopBUS {

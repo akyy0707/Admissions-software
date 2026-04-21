@@ -4,22 +4,20 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 public class HibernateUtil {
-    private static final SessionFactory sessionFactory = buildSessionFactory();
 
-    private static SessionFactory buildSessionFactory() {
+    private static final SessionFactory sessionFactory;
+
+    static {
         try {
-            return new Configuration().configure().buildSessionFactory();
+            sessionFactory = new Configuration()
+                    .configure("hibernate.cfg.xml")
+                    .buildSessionFactory();
         } catch (Throwable ex) {
-            System.err.println("Initial SessionFactory creation failed." + ex);
-            throw new ExceptionInInitializerError(ex);
+            throw new ExceptionInInitializerError("Lỗi Hibernate: " + ex);
         }
     }
 
     public static SessionFactory getSessionFactory() {
         return sessionFactory;
-    }
-
-    public static void shutdown() {
-        getSessionFactory().close();
     }
 }

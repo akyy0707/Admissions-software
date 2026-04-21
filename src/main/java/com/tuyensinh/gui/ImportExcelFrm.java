@@ -1,10 +1,10 @@
-package com.tuyensinh.gui;
+package com.tuyensinh.GUI;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-import com.tuyensinh.bus.*;
+import com.tuyensinh.BUS.*;
 
 public class ImportExcelFrm extends JFrame {
 

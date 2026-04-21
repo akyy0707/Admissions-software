@@ -1,7 +1,7 @@
-package com.tuyensinh.bus;
+package com.tuyensinh.BUS;
 
-import com.tuyensinh.dao.QuyDoiDAO;
-import com.tuyensinh.dto.QuyDoiDTO;
+import com.tuyensinh.DAO.QuyDoiDAO;
+import com.tuyensinh.DTO.QuyDoiDTO;
 import java.util.List;
 
 public class QuyDoiBUS {

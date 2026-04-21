@@ -1,6 +1,6 @@
-package com.tuyensinh.dao;
+package com.tuyensinh.DAO;
 
-import com.tuyensinh.dto.NganhToHopDTO;
+import com.tuyensinh.DTO.NganhToHopDTO;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import com.tuyensinh.config.HibernateUtil;
