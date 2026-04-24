@@ -41,7 +41,7 @@ public class NganhToHopDTO {
     @Column(name = "KHAC") private Boolean khac;
     @Column(name = "KTPL") private Boolean ktpl;
 
-    @Column(name = "dolech", precision = 6, scale = 2)
+    @Column(name = "dolech")
     private Double doLech;
 
     public NganhToHopDTO() {}

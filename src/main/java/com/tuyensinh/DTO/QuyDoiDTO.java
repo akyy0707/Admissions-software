@@ -15,10 +15,10 @@ public class QuyDoiDTO {
     @Column(name = "d_tohop", length = 45) private String toHop;
     @Column(name = "d_mon", length = 45) private String mon;
 
-    @Column(name = "d_diema", precision = 6, scale = 2) private Double diemA;
-    @Column(name = "d_diemb", precision = 6, scale = 2) private Double diemB;
-    @Column(name = "d_diemc", precision = 6, scale = 2) private Double diemC;
-    @Column(name = "d_diemd", precision = 6, scale = 2) private Double diemD;
+    @Column(name = "d_diema") private Double diemA;
+    @Column(name = "d_diemb") private Double diemB;
+    @Column(name = "d_diemc") private Double diemC;
+    @Column(name = "d_diemd") private Double diemD;
 
     @Column(name = "d_maquydoi", length = 45, unique = true)
     private String maQuyDoi;

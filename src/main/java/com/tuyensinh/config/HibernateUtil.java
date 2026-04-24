@@ -3,6 +3,11 @@ package com.tuyensinh.config;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
+import com.tuyensinh.DTO.NganhDTO;
+import com.tuyensinh.DTO.ToHopDTO;
+import com.tuyensinh.DTO.QuyDoiDTO;
+import com.tuyensinh.DTO.NganhToHopDTO;
+
 public class HibernateUtil {
 
     private static final SessionFactory sessionFactory;
