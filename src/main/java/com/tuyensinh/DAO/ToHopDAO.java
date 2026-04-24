@@ -17,6 +17,20 @@ public class ToHopDAO {
         }
     }
 
+    /**
+     * Lấy tổ hợp theo mã
+     */
+    public ToHopDTO getByMa(String maToHop) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM ToHopDTO WHERE maToHop = :ma", ToHopDTO.class)
+                    .setParameter("ma", maToHop)
+                    .uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public boolean save(ToHopDTO toHop) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

@@ -17,6 +17,20 @@ public class NganhDAO {
         }
     }
 
+    /**
+     * Lấy ngành theo mã
+     */
+    public NganhDTO getByMa(String maNganh) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM NganhDTO WHERE maNganh = :ma", NganhDTO.class)
+                    .setParameter("ma", maNganh)
+                    .uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public boolean save(NganhDTO nganh) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

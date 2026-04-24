@@ -58,4 +58,11 @@ public class QuyDoiDTO {
 
     public String getPhanVi() { return phanVi; }
     public void setPhanVi(String phanVi) { this.phanVi = phanVi; }
+
+    /**
+     * Lấy hệ số quy đổi (mặc định 1.0)
+     */
+    public double getHeSo() {
+        return 1.0;
+    }
 }
