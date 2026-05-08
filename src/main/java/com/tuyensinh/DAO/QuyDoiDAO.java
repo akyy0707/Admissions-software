@@ -35,7 +35,7 @@ public class QuyDoiDAO {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.save(quyDoi);
+            session.persist(quyDoi);
             transaction.commit();
             return true;
         } catch (Exception e) {
@@ -49,7 +49,7 @@ public class QuyDoiDAO {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.update(quyDoi);
+            session.merge(quyDoi);
             transaction.commit();
             return true;
         } catch (Exception e) {
@@ -65,7 +65,7 @@ public class QuyDoiDAO {
             transaction = session.beginTransaction();
             QuyDoiDTO quyDoi = session.get(QuyDoiDTO.class, idQd);
             if (quyDoi != null) {
-                session.delete(quyDoi);
+                session.remove(quyDoi);
                 transaction.commit();
                 return true;
             }

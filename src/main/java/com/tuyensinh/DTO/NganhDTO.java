@@ -23,10 +23,10 @@ public class NganhDTO {
     @Column(name = "n_chitieu")
     private int chiTieu;
 
-    @Column(name = "n_diemsan", precision = 10, scale = 2)
+    @Column(name = "n_diemsan")
     private Double diemSan;
 
-    @Column(name = "n_diemtrungtuyen", precision = 10, scale = 2)
+    @Column(name = "n_diemtrungtuyen")
     private Double diemTrungTuyen;
 
     @Column(name = "n_tuyenthang", length = 1) private String tuyenThang;
