@@ -1,10 +1,10 @@
 package com.tuyensinh.main;
 
-import com.tuyensinh.GUI.LoginForm;
+import com.tuyensinh.GUI.ImportExcelFrm;
 
 public class Main {
   public static void main(String[] args) {
-    new LoginForm().setVisible(true);
+    new ImportExcelFrm().setVisible(true);
   }
 }
 

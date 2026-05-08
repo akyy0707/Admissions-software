@@ -18,6 +18,10 @@
         <!-- mapping -->
         <mapping class="com.tuyensinh.DTO.UserDTO"/>
         <mapping class="com.tuyensinh.DTO.ThiSinhDTO"/>
+        <mapping class="com.tuyensinh.DTO.NganhDTO" />
+        <mapping class="com.tuyensinh.DTO.ToHopDTO" />
+        <mapping class="com.tuyensinh.DTO.QuyDoiDTO" />
+        <mapping class="com.tuyensinh.DTO.NganhToHopDTO" />
 
     </session-factory>
 </hibernate-configuration>
