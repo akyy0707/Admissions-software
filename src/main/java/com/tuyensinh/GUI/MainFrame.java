@@ -35,7 +35,7 @@ public class MainFrame extends JFrame {
         tabbedPane.addTab("👨‍🎓 Thi Sinh", new ThiSinhPanel());
         tabbedPane.addTab("📋 Nguyen Vong", new NguyenVongPanel());
         tabbedPane.addTab("✅ Xet Tuyen", new XetTuyenPanel());
-        tabbedPane.addTab("📥 Import Excel", new ImportExcel());
+        tabbedPane.addTab("📥 Import Excel", new ImportExcelFrm());
 
         if (currentUser.getRole() == UserDTO.Role.ADMIN) {
             tabbedPane.addTab("👤 Quan Ly User", new UserPanel());
