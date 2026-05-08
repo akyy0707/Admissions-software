@@ -17,6 +17,20 @@ public class QuyDoiDAO {
         }
     }
 
+    /**
+     * Lấy quy đổi theo mã môn
+     */
+    public QuyDoiDTO getByMaMon(String maMon) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM QuyDoiDTO WHERE maMon = :ma", QuyDoiDTO.class)
+                    .setParameter("ma", maMon)
+                    .uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public boolean save(QuyDoiDTO quyDoi) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

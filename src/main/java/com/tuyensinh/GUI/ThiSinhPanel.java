@@ -2,16 +2,19 @@ package com.tuyensinh.GUI;
 
 import com.tuyensinh.BUS.ThiSinhBUS;
 import com.tuyensinh.DTO.ThiSinhDTO;
+import com.tuyensinh.DTO.ThiSinhDTO.GioiTinh;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class ThiSinhPanel extends JPanel {
 
     private JTable table;
-    private DefaultTableModel model;
+    private DefaultTableModel tableModel;
     private ThiSinhBUS tsBUS = new ThiSinhBUS();
 
     private JTextField txtSearch;
@@ -19,17 +22,32 @@ public class ThiSinhPanel extends JPanel {
     public ThiSinhPanel() {
         setLayout(new BorderLayout());
 
-        String[] cols = {"ID", "Họ", "Tên", "CCCD"};
-        model = new DefaultTableModel(cols, 0);
-        table = new JTable(model);
+        // ===== COLUMNS =====
+        String[] columns = {
+                "ID", "Số Báo Danh", "Họ", "Tên",
+                "CCCD", "Ngày Sinh", "Giới Tính",
+                "Điện Thoại", "Email"
+        };
 
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        table = new JTable(tableModel);
+        table.setRowHeight(25);
+
+        // ===== TOP PANEL =====
         JPanel top = new JPanel();
 
         txtSearch = new JTextField(15);
-        JButton btnSearch = new JButton("Search");
-        JButton btnAdd = new JButton("Add");
-        JButton btnDelete = new JButton("Delete");
+        JButton btnSearch = new JButton("🔍 Tìm");
+        JButton btnAdd = new JButton("➕ Thêm");
+        JButton btnDelete = new JButton("🗑 Xóa");
 
+        top.add(new JLabel("Tìm kiếm:"));
         top.add(txtSearch);
         top.add(btnSearch);
         top.add(btnAdd);
@@ -40,54 +58,96 @@ public class ThiSinhPanel extends JPanel {
 
         loadData();
 
+        // ===== EVENTS =====
         btnSearch.addActionListener(e -> search());
         btnAdd.addActionListener(e -> addThiSinh());
         btnDelete.addActionListener(e -> deleteThiSinh());
     }
 
+    // ===== LOAD DATA =====
     private void loadData() {
-        model.setRowCount(0);
+        tableModel.setRowCount(0);
 
-        List<ThiSinhDTO> list = tsBUS.getPage(1, 20);
+        List<ThiSinhDTO> list = tsBUS.getPage(1, 50);
 
         for (ThiSinhDTO ts : list) {
-            model.addRow(new Object[]{
+            tableModel.addRow(new Object[]{
                     ts.getId(),
+                    ts.getSoBaoDanh(),
                     ts.getHo(),
                     ts.getTen(),
-                    ts.getCccd()
+                    ts.getCccd(),
+                    ts.getNgaySinh(),
+                    ts.getGioiTinh(),
+                    ts.getDienThoai(),
+                    ts.getEmail()
             });
         }
     }
 
+    // ===== SEARCH =====
     private void search() {
-        String key = txtSearch.getText();
+        String key = txtSearch.getText().trim();
 
-        model.setRowCount(0);
+        tableModel.setRowCount(0);
 
         List<ThiSinhDTO> list = tsBUS.search(key, 1, 50);
 
         for (ThiSinhDTO ts : list) {
-            model.addRow(new Object[]{
+            tableModel.addRow(new Object[]{
                     ts.getId(),
+                    ts.getSoBaoDanh(),
                     ts.getHo(),
                     ts.getTen(),
-                    ts.getCccd()
+                    ts.getCccd(),
+                    ts.getNgaySinh(),
+                    ts.getGioiTinh(),
+                    ts.getDienThoai(),
+                    ts.getEmail()
             });
         }
     }
 
+    // ===== ADD =====
     private void addThiSinh() {
+    try {
         String ho = JOptionPane.showInputDialog(this, "Nhập họ:");
         String ten = JOptionPane.showInputDialog(this, "Nhập tên:");
         String cccd = JOptionPane.showInputDialog(this, "Nhập CCCD:");
+        String sbd = JOptionPane.showInputDialog(this, "Nhập số báo danh:");
+
+        String ngaySinhStr = JOptionPane.showInputDialog(this, "Nhập ngày sinh (dd/MM/yyyy):");
+
+        // chọn giới tính bằng dropdown (chuẩn)
+        GioiTinh gioiTinh = (GioiTinh) JOptionPane.showInputDialog(
+                this,
+                "Chọn giới tính:",
+                "Giới tính",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                GioiTinh.values(),
+                GioiTinh.Nam
+        );
+
+        String sdt = JOptionPane.showInputDialog(this, "Nhập điện thoại:");
+        String email = JOptionPane.showInputDialog(this, "Nhập email:");
 
         if (ho == null || ten == null) return;
 
+        // ===== PARSE DATE =====
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date ngaySinh = sdf.parse(ngaySinhStr);
+
+        // ===== SET DTO =====
         ThiSinhDTO ts = new ThiSinhDTO();
         ts.setHo(ho);
         ts.setTen(ten);
         ts.setCccd(cccd);
+        ts.setSoBaoDanh(sbd);
+        ts.setNgaySinh(ngaySinh); // ✅ đúng kiểu Date
+        ts.setGioiTinh(gioiTinh); // ✅ đúng enum
+        ts.setDienThoai(sdt);
+        ts.setEmail(email);
 
         if (tsBUS.insert(ts)) {
             JOptionPane.showMessageDialog(this, "Thêm thành công!");
@@ -95,8 +155,12 @@ public class ThiSinhPanel extends JPanel {
         } else {
             JOptionPane.showMessageDialog(this, "Thêm thất bại!");
         }
-    }
 
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Sai định dạng ngày! (dd/MM/yyyy)");
+    }
+}
+    // ===== DELETE =====
     private void deleteThiSinh() {
         int row = table.getSelectedRow();
 
@@ -105,7 +169,7 @@ public class ThiSinhPanel extends JPanel {
             return;
         }
 
-        int id = (int) model.getValueAt(row, 0);
+        int id = (int) tableModel.getValueAt(row, 0);
 
         if (tsBUS.delete(id)) {
             JOptionPane.showMessageDialog(this, "Xóa thành công!");
