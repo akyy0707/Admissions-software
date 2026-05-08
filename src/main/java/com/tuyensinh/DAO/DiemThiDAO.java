@@ -1,6 +1,7 @@
 package com.tuyensinh.DAO;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.tuyensinh.config.DB;
@@ -58,5 +59,89 @@ public class DiemThiDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Lấy điểm thi theo CCCD
+     */
+    public DiemThiDTO getByCCCD(String cccd) {
+        String sql = "SELECT * FROM xt_diemthixettuyen WHERE cccd = ?";
+        try (Connection conn = DB.getConn();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, cccd);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    DiemThiDTO d = new DiemThiDTO();
+                    d.setCccd(rs.getString("cccd"));
+                    d.setTo(rs.getDouble("TO"));
+                    d.setVa(rs.getDouble("VA"));
+                    d.setLi(rs.getDouble("LI"));
+                    d.setHo(rs.getDouble("HO"));
+                    d.setSi(rs.getDouble("SI"));
+                    d.setSu(rs.getDouble("SU"));
+                    d.setDi(rs.getDouble("DI"));
+                    d.setN1_thi(rs.getDouble("N1_THI"));
+                    d.setKtpl(rs.getDouble("KTPL"));
+                    d.setTi(rs.getDouble("TI"));
+                    d.setCncn(rs.getDouble("CNCN"));
+                    d.setCnnn(rs.getDouble("CNNN"));
+                    d.setNk1(rs.getDouble("NK1"));
+                    d.setNk2(rs.getDouble("NK2"));
+                    return d;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Lấy tất cả điểm thi
+     */
+    public List<DiemThiDTO> getAll() {
+        List<DiemThiDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM xt_diemthixettuyen";
+        try (Connection conn = DB.getConn();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                DiemThiDTO d = new DiemThiDTO();
+                d.setCccd(rs.getString("cccd"));
+                d.setTo(rs.getDouble("TO"));
+                d.setVa(rs.getDouble("VA"));
+                d.setLi(rs.getDouble("LI"));
+                d.setHo(rs.getDouble("HO"));
+                d.setSi(rs.getDouble("SI"));
+                d.setSu(rs.getDouble("SU"));
+                d.setDi(rs.getDouble("DI"));
+                d.setN1_thi(rs.getDouble("N1_THI"));
+                d.setKtpl(rs.getDouble("KTPL"));
+                d.setTi(rs.getDouble("TI"));
+                d.setCncn(rs.getDouble("CNCN"));
+                d.setCnnn(rs.getDouble("CNNN"));
+                d.setNk1(rs.getDouble("NK1"));
+                d.setNk2(rs.getDouble("NK2"));
+                list.add(d);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Xóa điểm thi theo CCCD
+     */
+    public boolean delete(String cccd) {
+        String sql = "DELETE FROM xt_diemthixettuyen WHERE cccd = ?";
+        try (Connection conn = DB.getConn();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, cccd);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

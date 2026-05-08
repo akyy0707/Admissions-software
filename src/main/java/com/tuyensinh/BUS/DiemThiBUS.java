@@ -57,6 +57,27 @@ public class DiemThiBUS {
         }
     }
 
+    /**
+     * Lấy tất cả điểm thi
+     */
+    public List<DiemThiDTO> getAll() {
+        return dao.getAll();
+    }
+
+    /**
+     * Lấy điểm thi theo CCCD
+     */
+    public DiemThiDTO getByCCCD(String cccd) {
+        return dao.getByCCCD(cccd);
+    }
+
+    /**
+     * Xóa điểm thi theo CCCD
+     */
+    public boolean delete(String cccd) {
+        return dao.delete(cccd);
+    }
+
     private String getString(Cell cell) {
         if (cell == null)
             return "";

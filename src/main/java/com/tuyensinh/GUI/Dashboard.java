@@ -1,11 +1,12 @@
 package com.tuyensinh.GUI;
 
+import java.awt.BorderLayout;
+
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
+
 import com.tuyensinh.DTO.UserDTO;
-
-import javax.swing.*;
-import java.awt.*;
-
-import com.tuyensinh.GUI.*;
 
 public class Dashboard extends JFrame {
 
@@ -22,6 +23,9 @@ public class Dashboard extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
+        // 🔥 Chuyển sang MainFrame thay vì Dashboard cũ
+        new MainFrame(currentUser);
+        dispose();
         JTabbedPane tabs = new JTabbedPane();
 
         // 🔥 Tab thí sinh (ai cũng thấy)
