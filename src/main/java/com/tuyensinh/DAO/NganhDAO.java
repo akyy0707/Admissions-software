@@ -21,7 +21,7 @@ public class NganhDAO {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.save(nganh);
+            session.persist(nganh);
             transaction.commit();
             return true;
         } catch (Exception e) {
@@ -35,7 +35,7 @@ public class NganhDAO {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.update(nganh);
+            session.merge(nganh);
             transaction.commit();
             return true;
         } catch (Exception e) {
@@ -51,7 +51,7 @@ public class NganhDAO {
             transaction = session.beginTransaction();
             NganhDTO nganh = session.get(NganhDTO.class, idNganh);
             if (nganh != null) {
-                session.delete(nganh);
+                session.remove(nganh);
                 transaction.commit();
                 return true;
             }

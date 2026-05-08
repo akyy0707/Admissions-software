@@ -21,7 +21,7 @@ public class ToHopDAO {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.save(toHop);
+            session.persist(toHop);
             transaction.commit();
             return true;
         } catch (Exception e) {
@@ -35,7 +35,7 @@ public class ToHopDAO {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.update(toHop);
+            session.merge(toHop);
             transaction.commit();
             return true;
         } catch (Exception e) {
@@ -51,7 +51,7 @@ public class ToHopDAO {
             transaction = session.beginTransaction();
             ToHopDTO toHop = session.get(ToHopDTO.class, idToHop);
             if (toHop != null) {
-                session.delete(toHop);
+                session.remove(toHop);
                 transaction.commit();
                 return true;
             }
