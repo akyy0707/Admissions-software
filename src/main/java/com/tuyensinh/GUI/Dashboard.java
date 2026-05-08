@@ -5,7 +5,7 @@ import com.tuyensinh.DTO.UserDTO;
 import javax.swing.*;
 import java.awt.*;
 
-import com.tuyensinh.GUI.ImportExcel;
+import com.tuyensinh.GUI.*;
 
 public class Dashboard extends JFrame {
 
@@ -27,7 +27,9 @@ public class Dashboard extends JFrame {
         // 🔥 Tab thí sinh (ai cũng thấy)
         tabs.addTab("👨‍🎓 Thí Sinh", new ThiSinhPanel());
 
-        tabs.addTab("📥 Import Excel", new ImportExcel());
+        tabs.addTab("📥 Import Excel điểm", new ImprtExDiem());
+        tabs.addTab("📥 Import Excel điểm cộng", new ImprtExDiemCong());
+
         // 🔥 Tab user (chỉ admin)
         if (currentUser.getRole() == UserDTO.Role.ADMIN) {
             tabs.addTab("👤 User", new UserPanel());

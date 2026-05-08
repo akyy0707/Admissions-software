@@ -21,7 +21,7 @@ public class NganhToHopDAO {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.save(mapping);
+            session.persist(mapping);
             transaction.commit();
             return true;
         } catch (Exception e) {
@@ -37,7 +37,7 @@ public class NganhToHopDAO {
             transaction = session.beginTransaction();
             NganhToHopDTO mapping = session.get(NganhToHopDTO.class, idMapping);
             if (mapping != null) {
-                session.delete(mapping);
+                session.remove(mapping);
                 transaction.commit();
                 return true;
             }
