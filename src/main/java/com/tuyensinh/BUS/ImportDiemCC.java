@@ -10,11 +10,11 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-public class ImportDGNL {
+public class ImportDiemCC {
 
     private Connection conn;
 
-    public ImportDGNL(Connection conn) {
+    public ImportDiemCC(Connection conn) {
         this.conn = conn;
     }
 
@@ -31,11 +31,11 @@ public class ImportDGNL {
                     "WHERE cccd = ?";
 
             String sqlInsert = "INSERT INTO xt_diemthixettuyen " +
-                    "(cccd, NL1) " +
+                    "(cccd, N1_CC) " +
                     "VALUES (?, ?)";
 
             String sqlUpdate = "UPDATE xt_diemthixettuyen " +
-                    "SET NL1 = ? " +
+                    "SET N1_CC = ? " +
                     "WHERE cccd = ?";
 
             PreparedStatement psCheck = conn.prepareStatement(sqlCheck);
@@ -44,7 +44,7 @@ public class ImportDGNL {
 
             DataFormatter formatter = new DataFormatter();
 
-            // bỏ dòng tiêu đề
+            // Bỏ dòng tiêu đề
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
 
                 Row row = sheet.getRow(i);
@@ -52,18 +52,18 @@ public class ImportDGNL {
                 if (row == null)
                     continue;
 
-                // cột B = CCCD
+                // Cột B = CCCD
                 String cccd = formatter.formatCellValue(row.getCell(1)).trim();
 
-                // cột I = ĐIỂM
-                String diemStr = formatter.formatCellValue(row.getCell(8)).trim();
+                // Cột E = Điểm quy đổi
+                String diemQDStr = formatter.formatCellValue(row.getCell(4)).trim();
 
-                if (cccd.isEmpty() || diemStr.isEmpty())
+                if (cccd.isEmpty() || diemQDStr.isEmpty())
                     continue;
 
-                double diem = Double.parseDouble(diemStr);
+                double diemQD = Double.parseDouble(diemQDStr);
 
-                // kiểm tra tồn tại
+                // Kiểm tra tồn tại
                 psCheck.setString(1, cccd);
 
                 ResultSet rs = psCheck.executeQuery();
@@ -71,7 +71,7 @@ public class ImportDGNL {
                 if (rs.next()) {
 
                     // UPDATE
-                    psUpdate.setDouble(1, diem);
+                    psUpdate.setDouble(1, diemQD);
                     psUpdate.setString(2, cccd);
 
                     psUpdate.executeUpdate();
@@ -80,7 +80,7 @@ public class ImportDGNL {
 
                     // INSERT
                     psInsert.setString(1, cccd);
-                    psInsert.setDouble(2, diem);
+                    psInsert.setDouble(2, diemQD);
 
                     psInsert.executeUpdate();
                 }
@@ -95,7 +95,7 @@ public class ImportDGNL {
             psInsert.close();
             psUpdate.close();
 
-            System.out.println("Import ĐGNL thành công!");
+            System.out.println("Import điểm chứng chỉ thành công!");
 
         } catch (Exception e) {
             e.printStackTrace();
