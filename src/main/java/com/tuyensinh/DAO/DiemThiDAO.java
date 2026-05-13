@@ -81,6 +81,8 @@ public class DiemThiDAO {
                     d.setSu(rs.getDouble("SU"));
                     d.setDi(rs.getDouble("DI"));
                     d.setN1_thi(rs.getDouble("N1_THI"));
+                    d.setN1_cc(rs.getDouble("N1_CC"));
+                    d.setNl1(rs.getDouble("NL1"));
                     d.setKtpl(rs.getDouble("KTPL"));
                     d.setTi(rs.getDouble("TI"));
                     d.setCncn(rs.getDouble("CNCN"));
@@ -116,6 +118,8 @@ public class DiemThiDAO {
                 d.setSu(rs.getDouble("SU"));
                 d.setDi(rs.getDouble("DI"));
                 d.setN1_thi(rs.getDouble("N1_THI"));
+                d.setN1_cc(rs.getDouble("N1_CC"));
+                d.setNl1(rs.getDouble("NL1"));
                 d.setKtpl(rs.getDouble("KTPL"));
                 d.setTi(rs.getDouble("TI"));
                 d.setCncn(rs.getDouble("CNCN"));
