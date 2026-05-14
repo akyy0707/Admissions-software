@@ -1,14 +1,28 @@
 package com.tuyensinh.GUI;
 
-import com.tuyensinh.DTO.UserDTO;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridLayout;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
+import com.tuyensinh.DTO.UserDTO;
 
 public class MainFrame extends JFrame {
 
     private UserDTO currentUser;
-    private JTabbedPane tabbedPane;
+    private JPanel mainContent;
+    private CardLayout cardLayout;
 
     public MainFrame(UserDTO user) {
         this.currentUser = user;
@@ -16,120 +30,168 @@ public class MainFrame extends JFrame {
     }
 
     private void initComponents() {
-        setTitle("Phần Mềm Tuyển Sinh - " + currentUser.getUsername());
-        setSize(1100, 700);
+
+        setTitle("Tuyển Sinh 2025");
+        setSize(1200, 750);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
 
-        // ===== FONT EMOJI =====
-        UIManager.put("Menu.font", new Font("Segoe UI Emoji", Font.PLAIN, 14));
-        UIManager.put("MenuItem.font", new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        // ===== SIDEBAR =====
+        JPanel sidebar = new JPanel();
+        sidebar.setBackground(new Color(33, 43, 54));
+        sidebar.setPreferredSize(new Dimension(230, 0));
+        sidebar.setLayout(new BorderLayout());
 
-        // Menu Bar
-        setJMenuBar(createMenuBar());
+        // ===== LOGO =====
+        JPanel logoPanel = new JPanel();
+        logoPanel.setBackground(new Color(25, 32, 40));
+        logoPanel.setPreferredSize(new Dimension(230, 80));
 
-        // ===== TAB =====
-        tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        tabbedPane.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        JLabel lblLogo = new JLabel("TUYỂN SINH");
+        lblLogo.setForeground(Color.WHITE);
+        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 22));
 
-        tabbedPane.addTab("👨‍🎓 Thi Sinh", new ThiSinhPanel());
-        tabbedPane.addTab("📋 Nguyen Vong", new NguyenVongPanel());
-        tabbedPane.addTab("✅ Xet Tuyen", new XetTuyenPanel());
-        tabbedPane.addTab("📥 Import Excel", new ImportExcelFrm());
-        tabbedPane.addTab("🧠 Import ĐGNL", new ImportDGNLPanel());
-        tabbedPane.addTab("🏅 Import Điểm CC", new ImportDiemCCPanel());
-        if (currentUser.getRole() == UserDTO.Role.ADMIN) {
-            tabbedPane.addTab("👤 Quan Ly User", new UserPanel());
+        logoPanel.add(lblLogo);
+
+        sidebar.add(logoPanel, BorderLayout.NORTH);
+
+        // ===== MENU =====
+        JPanel menuPanel = new JPanel();
+        menuPanel.setBackground(new Color(33, 43, 54));
+        menuPanel.setLayout(new GridLayout(0, 1, 0, 8));
+        menuPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
+
+        String[] menus = {
+                "Trang chủ",
+                "Ngành",
+                "Tổ hợp",
+                "Ngành - Tổ hợp",
+                "Thí sinh",
+                "Điểm thi",
+                "Điểm cộng",
+                "Nguyện vọng",
+                "Xét tuyển"
+        };
+
+        for (String m : menus) {
+
+            JButton btn = new JButton(m);
+
+            btn.setFocusPainted(false);
+            btn.setBorderPainted(false);
+            btn.setBackground(new Color(33, 43, 54));
+            btn.setForeground(Color.WHITE);
+            btn.setHorizontalAlignment(SwingConstants.LEFT);
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            btn.setPreferredSize(new Dimension(200, 45));
+
+            // ===== HOVER =====
+            btn.addMouseListener(new java.awt.event.MouseAdapter() {
+
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    btn.setBackground(new Color(52, 73, 94));
+                }
+
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    btn.setBackground(new Color(33, 43, 54));
+                }
+            });
+
+            // ===== CHANGE PANEL =====
+            btn.addActionListener(e -> cardLayout.show(mainContent, m));
+
+            menuPanel.add(btn);
         }
 
-        tabbedPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        add(tabbedPane, BorderLayout.CENTER);
+        sidebar.add(menuPanel, BorderLayout.CENTER);
 
-        // ===== STATUS BAR =====
-        JPanel statusBar = new JPanel(new BorderLayout());
-        statusBar.setBorder(BorderFactory.createEtchedBorder());
+        // ===== TOPBAR =====
+        JPanel topbar = new JPanel(new BorderLayout());
+        topbar.setPreferredSize(new Dimension(0, 60));
+        topbar.setBackground(Color.WHITE);
+        topbar.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
-        JLabel lblLeft = new JLabel("  👤 " + currentUser.getUsername() + " | 🔑 " + currentUser.getRole());
-        JLabel lblRight = new JLabel(new java.util.Date().toString() + "  ");
+        JLabel lblWelcome = new JLabel(
+                "Xin chào, " + currentUser.getUsername()
+        );
 
-        statusBar.add(lblLeft, BorderLayout.WEST);
-        statusBar.add(lblRight, BorderLayout.EAST);
+        lblWelcome.setFont(new Font("Segoe UI", Font.BOLD, 18));
 
-        add(statusBar, BorderLayout.SOUTH);
+        JButton btnLogout = new JButton("Đăng xuất");
+        btnLogout.setFocusPainted(false);
+        btnLogout.setBackground(new Color(231, 76, 60));
+        btnLogout.setForeground(Color.WHITE);
+
+        btnLogout.addActionListener(e -> logout());
+
+        topbar.add(lblWelcome, BorderLayout.WEST);
+        topbar.add(btnLogout, BorderLayout.EAST);
+
+        // ===== CONTENT =====
+        cardLayout = new CardLayout();
+
+        mainContent = new JPanel(cardLayout);
+        mainContent.setBackground(new Color(245, 246, 250));
+        mainContent.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        mainContent.add(createHomePanel(), "Trang chủ");
+        mainContent.add(new NganhPanel(), "Ngành");
+        mainContent.add(new ToHopPanel(), "Tổ hợp");
+        mainContent.add(new NganhToHopPanel(), "Ngành - Tổ hợp");
+        mainContent.add(new ThiSinhPanel(), "Thí sinh");
+        mainContent.add(new DiemThiPanel(), "Điểm thi");
+        mainContent.add(new DiemCongPanel(), "Điểm cộng");
+        mainContent.add(new NguyenVongPanel(), "Nguyện vọng");
+        mainContent.add(new XetTuyenPanel(), "Xét tuyển");
+
+        // ===== RIGHT PANEL =====
+        JPanel rightPanel = new JPanel(new BorderLayout());
+
+        rightPanel.add(topbar, BorderLayout.NORTH);
+        rightPanel.add(mainContent, BorderLayout.CENTER);
+
+        add(sidebar, BorderLayout.WEST);
+        add(rightPanel, BorderLayout.CENTER);
 
         setVisible(true);
     }
 
-    private JMenuBar createMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
+    // ===== HOME PANEL =====
+    private JPanel createHomePanel() {
 
-        // ===== MENU HỆ THỐNG =====
-        JMenu menuSystem = new JMenu("⚙️ He thong");
-        menuSystem.setMnemonic('H');
+        JPanel panel = new JPanel();
+        panel.setBackground(Color.WHITE);
+        panel.setLayout(new BorderLayout());
 
-        JMenuItem itemLogout = new JMenuItem("🚪 Dang xuat");
-        itemLogout.setAccelerator(KeyStroke.getKeyStroke('L',
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
-                        | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
-        itemLogout.addActionListener(e -> logout());
+        JLabel lbl = new JLabel(
+                "<html><h1>HỆ THỐNG TUYỂN SINH 2025</h1>"
+                        + "<p>Chào mừng bạn đến với hệ thống quản lý tuyển sinh.</p></html>"
+        );
 
-        JMenuItem itemExit = new JMenuItem("❌ Thoat");
-        itemExit.setAccelerator(KeyStroke.getKeyStroke('Q',
-                Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()
-                        | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
-        itemExit.addActionListener(e -> System.exit(0));
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lbl.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        menuSystem.add(itemLogout);
-        menuSystem.addSeparator();
-        menuSystem.add(itemExit);
+        panel.add(lbl, BorderLayout.NORTH);
 
-        // ===== MENU TRA CỨU =====
-        JMenu menuSearch = new JMenu("🔍 Tra cuu");
-        menuSearch.setMnemonic('T');
-
-        JMenuItem itemSearchTS = new JMenuItem("👨‍🎓 Tim thi sinh");
-        itemSearchTS.addActionListener(e -> tabbedPane.setSelectedIndex(0));
-
-        JMenuItem itemSearchNV = new JMenuItem("📋 Tim nguyen vong");
-        itemSearchNV.addActionListener(e -> tabbedPane.setSelectedIndex(1));
-
-        menuSearch.add(itemSearchTS);
-        menuSearch.add(itemSearchNV);
-
-        // ===== MENU HELP =====
-        JMenu menuHelp = new JMenu("❓ Giup do");
-        menuHelp.setMnemonic('G');
-
-        JMenuItem itemAbout = new JMenuItem("ℹ️ Gioi thieu");
-        itemAbout.addActionListener(e -> showAbout());
-
-        menuHelp.add(itemAbout);
-
-        menuBar.add(menuSystem);
-        menuBar.add(menuSearch);
-        menuBar.add(menuHelp);
-
-        return menuBar;
+        return panel;
     }
 
+    // ===== LOGOUT =====
     private void logout() {
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Bạn có muốn đăng xuất không?",
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có muốn đăng xuất?",
                 "Xác nhận",
-                JOptionPane.YES_NO_OPTION);
+                JOptionPane.YES_NO_OPTION
+        );
 
         if (confirm == JOptionPane.YES_OPTION) {
             dispose();
             new LoginForm();
         }
-    }
-
-    private void showAbout() {
-        JOptionPane.showMessageDialog(this,
-                "🎓 Phần Mềm Tuyển Sinh 2025\n" +
-                        "Version 1.0\n" +
-                        "Developed by Team",
-                "Giới thiệu",
-                JOptionPane.INFORMATION_MESSAGE);
     }
 }

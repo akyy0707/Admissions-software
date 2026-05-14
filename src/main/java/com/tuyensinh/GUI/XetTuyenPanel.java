@@ -1,191 +1,464 @@
 package com.tuyensinh.GUI;
 
-import com.tuyensinh.BUS.XetTuyenBUS;
-import com.tuyensinh.BUS.NganhBUS;
-import com.tuyensinh.DTO.NganhDTO;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
+
+import com.tuyensinh.BUS.NganhBUS;
+import com.tuyensinh.BUS.XetTuyenBUS;
+import com.tuyensinh.DTO.NganhDTO;
+
 /**
- * XetTuyenPanel - Panel xét tuyển và hiển thị kết quả
+ * XetTuyenPanel - Giao diện xét tuyển
+ * KHÔNG cần XetTuyenDAO hay XetTuyenDTO
+ * Vì đang dùng inner class trong XetTuyenBUS
  */
 public class XetTuyenPanel extends JPanel {
 
-    private XetTuyenBUS xetTuyenBUS = new XetTuyenBUS();
-    private NganhBUS nganhBUS = new NganhBUS();
-    
+    private XetTuyenBUS xetTuyenBUS;
+    private NganhBUS nganhBUS;
+
     private JTable table;
-    private DefaultTableModel tableModel;
-    private JTextField txtCCCD = new JTextField(15);
-    private JButton btnXetTuyen, btnXetTuyenDoi, btnThongKe, btnExport;
+    private DefaultTableModel model;
+
+    private JTextField txtCCCD;
+
+    private JLabel lblTong;
+    private JLabel lblTrungTuyen;
+    private JLabel lblKhongTrung;
 
     public XetTuyenPanel() {
+
+        xetTuyenBUS = new XetTuyenBUS();
+        nganhBUS = new NganhBUS();
+
         initComponents();
     }
 
+    // ================= INIT =================
+
     private void initComponents() {
-        setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // Title
-        JLabel lblTitle = new JLabel(" XÉT TUYỂN");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTitle.setBorder(new EmptyBorder(0, 0, 10, 0));
-        add(lblTitle, BorderLayout.NORTH);
+        setLayout(new BorderLayout(15, 15));
 
-        // Center - Table
-        String[] columns = {"STT", "Số Báo Danh", "Họ Tên", "CCCD", "Ngành", "Điểm Xét Tuyển", "Kết Quả", "Thứ Tự NV", "Ghi Chú"};
-        tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        table = new JTable(tableModel);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setRowHeight(25);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getTableHeader().setBackground(new Color(70, 130, 180));
-        table.getTableHeader().setForeground(Color.WHITE);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        setBackground(new Color(245, 247, 250));
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // South - Controls
-        JPanel southPanel = new JPanel(new BorderLayout(10, 10));
+        add(createTopPanel(), BorderLayout.NORTH);
 
-        // Search Panel
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.setBorder(BorderFactory.createTitledBorder("🔍 Xét tuyển theo CCCD"));
-        searchPanel.add(new JLabel("CCCD:"));
-        searchPanel.add(txtCCCD);
-        btnXetTuyen = new JButton("Xét Tuyển");
-        searchPanel.add(btnXetTuyen);
+        add(createCenterPanel(), BorderLayout.CENTER);
 
-        // Button Panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        btnXetTuyenDoi = new JButton("Xét Tuyển Đợt");
-        btnThongKe = new JButton("📊 Thống Kê");
-        btnExport = new JButton("📤 Export Excel");
-
-        buttonPanel.add(btnXetTuyenDoi);
-        buttonPanel.add(btnThongKe);
-        buttonPanel.add(btnExport);
-
-        southPanel.add(searchPanel, BorderLayout.NORTH);
-        southPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        add(scrollPane, BorderLayout.CENTER);
-        add(southPanel, BorderLayout.SOUTH);
-
-        // Event Listeners
-        btnXetTuyen.addActionListener(e -> xetTuyenTheoCCCD());
-        btnXetTuyenDoi.addActionListener(e -> xetTuyenDoi());
-        btnThongKe.addActionListener(e -> hienThiThongKe());
-        btnExport.addActionListener(e -> exportExcel());
-        txtCCCD.addActionListener(e -> xetTuyenTheoCCCD());
+        add(createBottomPanel(), BorderLayout.SOUTH);
     }
 
-    private void xetTuyenTheoCCCD() {
+    // ================= TOP =================
+
+    private JPanel createTopPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout());
+
+        panel.setOpaque(false);
+
+        JLabel lblTitle = new JLabel("QUẢN LÝ XÉT TUYỂN");
+
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
+
+        panel.add(lblTitle, BorderLayout.WEST);
+
+        return panel;
+    }
+
+    // ================= CENTER =================
+
+    private JPanel createCenterPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+
+        panel.setBackground(Color.WHITE);
+
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(225, 225, 225)),
+                new EmptyBorder(15, 15, 15, 15)
+        ));
+
+        // ===== CARD =====
+
+        JPanel cardPanel = new JPanel(new GridLayout(1, 3, 15, 15));
+
+        cardPanel.setBackground(Color.WHITE);
+
+        lblTong = createCardValue("0");
+
+        lblTrungTuyen = createCardValue("0");
+
+        lblKhongTrung = createCardValue("0");
+
+        cardPanel.add(createCard(
+                "Tổng thí sinh",
+                lblTong,
+                new Color(52, 152, 219)
+        ));
+
+        cardPanel.add(createCard(
+                "Trúng tuyển",
+                lblTrungTuyen,
+                new Color(46, 204, 113)
+        ));
+
+        cardPanel.add(createCard(
+                "Không trúng",
+                lblKhongTrung,
+                new Color(231, 76, 60)
+        ));
+
+        panel.add(cardPanel, BorderLayout.NORTH);
+
+        // ===== TABLE =====
+
+        String[] columns = {
+                "STT",
+                "CCCD",
+                "Ngành",
+                "Điểm XT",
+                "Kết quả",
+                "NV",
+                "Ghi chú"
+        };
+
+        model = new DefaultTableModel(columns, 0);
+
+        table = new JTable(model);
+
+        table.setRowHeight(35);
+
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        table.getTableHeader().setFont(
+                new Font("Segoe UI", Font.BOLD, 14)
+        );
+
+        table.getTableHeader().setBackground(
+                new Color(245, 246, 250)
+        );
+
+        table.setShowGrid(false);
+
+        table.setIntercellSpacing(new Dimension(0, 0));
+
+        JScrollPane scrollPane = new JScrollPane(table);
+
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    // ================= BOTTOM =================
+
+    private JPanel createBottomPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout());
+
+        panel.setOpaque(false);
+
+        // LEFT
+
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        left.setOpaque(false);
+
+        left.add(new JLabel("CCCD:"));
+
+        txtCCCD = new JTextField(20);
+
+        left.add(txtCCCD);
+
+        JButton btnXet1 = createButton(
+                "Xét 1 thí sinh",
+                new Color(52, 152, 219)
+        );
+
+        btnXet1.addActionListener(e -> xetMotThiSinh());
+
+        left.add(btnXet1);
+
+        // RIGHT
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        right.setOpaque(false);
+
+        JButton btnXetAll = createButton(
+                "Xét toàn bộ",
+                new Color(46, 204, 113)
+        );
+
+        JButton btnThongKe = createButton(
+                "Thống kê",
+                new Color(155, 89, 182)
+        );
+
+        btnXetAll.addActionListener(e -> xetTatCa());
+
+        btnThongKe.addActionListener(e -> thongKe());
+
+        right.add(btnXetAll);
+
+        right.add(btnThongKe);
+
+        panel.add(left, BorderLayout.WEST);
+
+        panel.add(right, BorderLayout.EAST);
+
+        return panel;
+    }
+
+    // ================= CARD =================
+
+    private JPanel createCard(
+            String title,
+            JLabel value,
+            Color color
+    ) {
+
+        JPanel card = new JPanel(new BorderLayout());
+
+        card.setBackground(Color.WHITE);
+
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(230, 230, 230)),
+                new EmptyBorder(15, 20, 15, 20)
+        ));
+
+        JLabel lblTitle = new JLabel(title);
+
+        lblTitle.setForeground(Color.GRAY);
+
+        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        value.setForeground(color);
+
+        value.setFont(new Font("Segoe UI", Font.BOLD, 28));
+
+        card.add(lblTitle, BorderLayout.NORTH);
+
+        card.add(value, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private JLabel createCardValue(String text) {
+
+        return new JLabel(text);
+    }
+
+    // ================= BUTTON =================
+
+    private JButton createButton(String text, Color color) {
+
+        JButton btn = new JButton(text);
+
+        btn.setBackground(color);
+
+        btn.setForeground(Color.WHITE);
+
+        btn.setFocusPainted(false);
+
+        btn.setBorderPainted(false);
+
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        btn.setPreferredSize(new Dimension(150, 40));
+
+        return btn;
+    }
+
+    // ================= XÉT 1 =================
+
+    private void xetMotThiSinh() {
+
         String cccd = txtCCCD.getText().trim();
+
         if (cccd.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập CCCD!");
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng nhập CCCD!"
+            );
+
             return;
         }
 
-        // Lấy danh sách ngành để xét
         List<NganhDTO> dsNganh = nganhBUS.getAll();
+
         List<String> dsMaNganh = new ArrayList<>();
+
         for (NganhDTO n : dsNganh) {
+
             dsMaNganh.add(n.getMaNganh());
         }
 
-        List<XetTuyenBUS.KetQuaXetTuyen> ketQuaList = xetTuyenBUS.xetTuyen(cccd, dsMaNganh);
-        hienThiKetQua(ketQuaList);
+        List<XetTuyenBUS.KetQuaXetTuyen> list =
+                xetTuyenBUS.xetTuyen(cccd, dsMaNganh);
+
+        loadTable(list);
     }
 
-    private void xetTuyenDoi() {
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Bạn có muốn xét tuyển đợt cho tất cả thí sinh?",
-                "Xác nhận",
-                JOptionPane.YES_NO_OPTION);
+    // ================= XÉT TẤT CẢ =================
 
-        if (confirm == JOptionPane.YES_OPTION) {
-            // Hiển thị loading
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            
-            Map<String, List<XetTuyenBUS.KetQuaXetTuyen>> ketQuaMap = xetTuyenBUS.xetTuyenDoi();
-            
-            tableModel.setRowCount(0);
-            int stt = 1;
-            for (List<XetTuyenBUS.KetQuaXetTuyen> list : ketQuaMap.values()) {
-                for (XetTuyenBUS.KetQuaXetTuyen kq : list) {
-                    Object[] row = {
+    private void xetTatCa() {
+
+        model.setRowCount(0);
+
+        Map<String, List<XetTuyenBUS.KetQuaXetTuyen>> map =
+                xetTuyenBUS.xetTuyenDoi();
+
+        int stt = 1;
+
+        int trung = 0;
+
+        int khong = 0;
+
+        for (List<XetTuyenBUS.KetQuaXetTuyen> list : map.values()) {
+
+            for (XetTuyenBUS.KetQuaXetTuyen kq : list) {
+
+                if (kq.trungTuyen) {
+                    trung++;
+                } else {
+                    khong++;
+                }
+
+                model.addRow(new Object[]{
                         stt++,
-                        kq.soBaoDanh,
-                        kq.hoTen,
                         kq.cccd,
                         kq.tenNganh,
                         String.format("%.2f", kq.diemXetTuyen),
-                        kq.trungTuyen ? "✅ Trúng tuyển" : "❌ Không trúng",
+                        kq.trungTuyen
+                                ? "Trúng tuyển"
+                                : "Không trúng",
                         kq.thuTuNguyenVong,
                         kq.lyDo
-                    };
-                    tableModel.addRow(row);
-                }
+                });
             }
-            
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            JOptionPane.showMessageDialog(this, "Đã xét tuyển xong! Tổng: " + ketQuaMap.size() + " thí sinh");
         }
-    }
 
-    private void hienThiKetQua(List<XetTuyenBUS.KetQuaXetTuyen> ketQuaList) {
-        tableModel.setRowCount(0);
-        int stt = 1;
-        for (XetTuyenBUS.KetQuaXetTuyen kq : ketQuaList) {
-            Object[] row = {
-                stt++,
-                kq.soBaoDanh,
-                kq.hoTen,
-                kq.cccd,
-                kq.tenNganh,
-                String.format("%.2f", kq.diemXetTuyen),
-                kq.trungTuyen ? "✅ Trúng tuyển" : "❌ Không trúng",
-                kq.thuTuNguyenVong,
-                kq.lyDo
-            };
-            tableModel.addRow(row);
-        }
-    }
+        lblTong.setText(String.valueOf(map.size()));
 
-    private void hienThiThongKe() {
-        XetTuyenBUS.ThongKeXetTuyen tk = xetTuyenBUS.thongKe();
-        
-        String message = String.format(
-            "📊 THỐNG KÊ XÉT TUYỂN\n\n" +
-            "Tổng số thí sinh: %d\n" +
-            "Số trúng tuyển: %d\n" +
-            "Số không trúng: %d\n" +
-            "Tỷ lệ trúng tuyển: %.2f%%",
-            tk.tongSoThiSinh,
-            tk.soTrungTuyen,
-            tk.soKhongTrungTuyen,
-            tk.tiLeTrungTuyen
+        lblTrungTuyen.setText(String.valueOf(trung));
+
+        lblKhongTrung.setText(String.valueOf(khong));
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Đã xét tuyển xong!"
         );
-        
-        JOptionPane.showMessageDialog(this, message, "Thống Kê", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private void exportExcel() {
-        JOptionPane.showMessageDialog(this, "Chức năng export Excel đang được phát triển!");
+    // ================= LOAD TABLE =================
+
+    private void loadTable(
+            List<XetTuyenBUS.KetQuaXetTuyen> list
+    ) {
+
+        model.setRowCount(0);
+
+        int stt = 1;
+
+        int trung = 0;
+
+        int khong = 0;
+
+        for (XetTuyenBUS.KetQuaXetTuyen kq : list) {
+
+            if (kq.trungTuyen) {
+                trung++;
+            } else {
+                khong++;
+            }
+
+            model.addRow(new Object[]{
+                    stt++,
+                    kq.cccd,
+                    kq.tenNganh,
+                    String.format("%.2f", kq.diemXetTuyen),
+                    kq.trungTuyen
+                            ? "Trúng tuyển"
+                            : "Không trúng",
+                    kq.thuTuNguyenVong,
+                    kq.lyDo
+            });
+        }
+
+        lblTong.setText("1");
+
+        lblTrungTuyen.setText(String.valueOf(trung));
+
+        lblKhongTrung.setText(String.valueOf(khong));
+    }
+
+    // ================= THỐNG KÊ =================
+
+    private void thongKe() {
+
+        XetTuyenBUS.ThongKeXetTuyen tk =
+                xetTuyenBUS.thongKe();
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("TỔNG THÍ SINH: ")
+                .append(tk.tongSoThiSinh)
+                .append("\n");
+
+        sb.append("TRÚNG TUYỂN: ")
+                .append(tk.soTrungTuyen)
+                .append("\n");
+
+        sb.append("KHÔNG TRÚNG: ")
+                .append(tk.soKhongTrungTuyen)
+                .append("\n");
+
+        sb.append("TỶ LỆ: ")
+                .append(String.format("%.2f", tk.tiLeTrungTuyen))
+                .append("%\n\n");
+
+        sb.append("THEO NGÀNH:\n");
+
+        for (String ma : tk.thongKeTheoNganh.keySet()) {
+
+            sb.append(ma)
+                    .append(": ")
+                    .append(tk.thongKeTheoNganh.get(ma))
+                    .append("\n");
+        }
+
+        JOptionPane.showMessageDialog(
+                this,
+                sb.toString(),
+                "Thống kê",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 }
