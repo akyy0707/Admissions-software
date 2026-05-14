@@ -4,7 +4,8 @@ public class DiemThiDTO {
     private String cccd;
     private double to, va, li, ho, si, su, di;
     private double n1_thi;
-    private String n1_cc;
+    private double n1_cc;
+    private double nl1;
     private double ktpl, ti, cncn, cnnn;
     private double nk1, nk2;
 
@@ -80,12 +81,20 @@ public class DiemThiDTO {
         this.n1_thi = n1_thi;
     }
 
-    public String getN1_cc() {
+    public double getN1_cc() {
         return n1_cc;
     }
 
-    public void setN1_cc(String n1_cc) {
+    public void setN1_cc(double n1_cc) {
         this.n1_cc = n1_cc;
+    }
+
+    public double getNl1() {
+        return nl1;
+    }
+
+    public void setNl1(double nl1) {
+        this.nl1 = nl1;
     }
 
     public double getKtpl() {

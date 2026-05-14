@@ -4,6 +4,7 @@ import com.tuyensinh.DAO.ThiSinhDAO;
 import com.tuyensinh.DTO.ThiSinhDTO;
 
 import java.util.List;
+import java.util.Map;
 
 public class ThiSinhBUS {
 
@@ -34,6 +35,14 @@ public class ThiSinhBUS {
 
     public long countSearch(String key) {
         return thiSinhDAO.countSearch(key);
+    }
+
+    public Map<String, Long> countByDoiTuong() {
+        return thiSinhDAO.countByDoiTuong();
+    }
+
+    public Map<String, Long> countByKhuVuc() {
+        return thiSinhDAO.countByKhuVuc();
     }
 
     public ThiSinhDTO getByCCCD(String cccd) {

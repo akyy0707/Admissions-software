@@ -36,7 +36,8 @@ public class MainFrame extends JFrame {
         tabbedPane.addTab("📋 Nguyen Vong", new NguyenVongPanel());
         tabbedPane.addTab("✅ Xet Tuyen", new XetTuyenPanel());
         tabbedPane.addTab("📥 Import Excel", new ImportExcelFrm());
-
+        tabbedPane.addTab("🧠 Import ĐGNL", new ImportDGNLPanel());
+        tabbedPane.addTab("🏅 Import Điểm CC", new ImportDiemCCPanel());
         if (currentUser.getRole() == UserDTO.Role.ADMIN) {
             tabbedPane.addTab("👤 Quan Ly User", new UserPanel());
         }

@@ -5,7 +5,9 @@ import com.tuyensinh.config.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ThiSinhDAO {
 
@@ -174,6 +176,44 @@ public class ThiSinhDAO {
         } catch (Exception e) {
             System.out.println("Lỗi countSearch: " + e.getMessage());
             return 0;
+        }
+    }
+
+    public Map<String, Long> countByDoiTuong() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            List<Object[]> rows = session.createQuery(
+                    "SELECT t.doiTuong, COUNT(t.id) FROM ThiSinhDTO t GROUP BY t.doiTuong",
+                    Object[].class).list();
+
+            Map<String, Long> result = new LinkedHashMap<>();
+            for (Object[] row : rows) {
+                String key = row[0] != null ? row[0].toString() : "Chua ro";
+                Long value = row[1] != null ? (Long) row[1] : 0L;
+                result.put(key, value);
+            }
+            return result;
+        } catch (Exception e) {
+            System.out.println("Loi countByDoiTuong: " + e.getMessage());
+            return Map.of();
+        }
+    }
+
+    public Map<String, Long> countByKhuVuc() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            List<Object[]> rows = session.createQuery(
+                    "SELECT t.khuVuc, COUNT(t.id) FROM ThiSinhDTO t GROUP BY t.khuVuc",
+                    Object[].class).list();
+
+            Map<String, Long> result = new LinkedHashMap<>();
+            for (Object[] row : rows) {
+                String key = row[0] != null ? row[0].toString() : "Chua ro";
+                Long value = row[1] != null ? (Long) row[1] : 0L;
+                result.put(key, value);
+            }
+            return result;
+        } catch (Exception e) {
+            System.out.println("Loi countByKhuVuc: " + e.getMessage());
+            return Map.of();
         }
     }
 }
