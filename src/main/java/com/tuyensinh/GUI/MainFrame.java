@@ -7,8 +7,13 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -17,6 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import com.tuyensinh.DTO.UserDTO;
+import com.tuyensinh.config.HibernateUtil;
 
 public class MainFrame extends JFrame {
 
@@ -162,22 +168,191 @@ public class MainFrame extends JFrame {
     // ===== HOME PANEL =====
     private JPanel createHomePanel() {
 
-        JPanel panel = new JPanel();
-        panel.setBackground(Color.WHITE);
-        panel.setLayout(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBackground(new Color(245, 247, 250));
+    panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        JLabel lbl = new JLabel(
-                "<html><h1>HỆ THỐNG TUYỂN SINH 2025</h1>"
-                        + "<p>Chào mừng bạn đến với hệ thống quản lý tuyển sinh.</p></html>"
-        );
+    // ================= THỐNG KÊ TỪ DB =================
 
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-        lbl.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+    int tongThiSinh = 0;
+    int tongNganh = 0;
+    int tongXetTuyen = 0;
 
-        panel.add(lbl, BorderLayout.NORTH);
+    try {
 
-        return panel;
+        Connection conn = HibernateUtil
+                .getSessionFactory()
+                .openSession()
+                .doReturningWork(c -> c);
+
+        // ===== Tổng thí sinh =====
+        String sqlThiSinh = "SELECT COUNT(*) FROM xt_thisinhxettuyen25";
+
+        PreparedStatement ps1 = conn.prepareStatement(sqlThiSinh);
+
+        ResultSet rs1 = ps1.executeQuery();
+
+        if (rs1.next()) {
+            tongThiSinh = rs1.getInt(1);
+        }
+
+        // ===== Tổng ngành =====
+        String sqlNganh = "SELECT COUNT(*) FROM xt_nganh";
+
+        PreparedStatement ps2 = conn.prepareStatement(sqlNganh);
+
+        ResultSet rs2 = ps2.executeQuery();
+
+        if (rs2.next()) {
+            tongNganh = rs2.getInt(1);
+        }
+
+        // ===== Tổng hồ sơ xét tuyển =====
+        String sqlXT = "SELECT COUNT(*) FROM xt_diemthixettuyen";
+
+        PreparedStatement ps3 = conn.prepareStatement(sqlXT);
+
+        ResultSet rs3 = ps3.executeQuery();
+
+        if (rs3.next()) {
+            tongXetTuyen = rs3.getInt(1);
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+
+    // ================= HEADER =================
+
+    JPanel header = new JPanel(new BorderLayout());
+    header.setOpaque(false);
+
+    JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ TUYỂN SINH 2025");
+
+    lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 32));
+    lblTitle.setForeground(new Color(44, 62, 80));
+
+    JLabel lblSub = new JLabel(
+            "Chào mừng bạn đến với hệ thống quản lý tuyển sinh đại học"
+    );
+
+    lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+    lblSub.setForeground(Color.GRAY);
+
+    JPanel titleBox = new JPanel();
+
+    titleBox.setOpaque(false);
+
+    titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
+
+    titleBox.add(lblTitle);
+    titleBox.add(Box.createVerticalStrut(10));
+    titleBox.add(lblSub);
+
+    header.add(titleBox, BorderLayout.WEST);
+
+    panel.add(header, BorderLayout.NORTH);
+
+    // ================= CENTER =================
+
+    JPanel center = new JPanel(new GridLayout(1, 3, 20, 20));
+
+    center.setOpaque(false);
+
+    center.setBorder(BorderFactory.createEmptyBorder(
+            40,
+            0,
+            0,
+            0
+    ));
+
+    center.add(createDashboardCard(
+            " Tổng thí sinh",
+            String.valueOf(tongThiSinh),
+            new Color(52, 152, 219)
+    ));
+
+    center.add(createDashboardCard(
+            " Tổng ngành",
+            String.valueOf(tongNganh),
+            new Color(46, 204, 113)
+    ));
+
+    center.add(createDashboardCard(
+            " Hồ sơ xét tuyển",
+            String.valueOf(tongXetTuyen),
+            new Color(155, 89, 182)
+    ));
+
+    panel.add(center, BorderLayout.CENTER);
+
+    // ================= FOOTER =================
+
+    JLabel footer = new JLabel(
+            "Admissions Management System © 2025",
+            SwingConstants.CENTER
+    );
+
+    footer.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+    footer.setForeground(Color.GRAY);
+
+    footer.setBorder(BorderFactory.createEmptyBorder(
+            20,
+            0,
+            0,
+            0
+    ));
+
+    panel.add(footer, BorderLayout.SOUTH);
+
+    return panel;
+}
+
+/**
+ * Dashboard Card
+ */
+private JPanel createDashboardCard(
+        String title,
+        String value,
+        Color color
+) {
+
+    JPanel card = new JPanel(new BorderLayout());
+
+    card.setBackground(Color.WHITE);
+
+    card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(230, 230, 230)),
+            BorderFactory.createEmptyBorder(25, 25, 25, 25)
+    ));
+
+    JLabel lblTitle = new JLabel(title);
+
+    lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
+    lblTitle.setForeground(new Color(80, 80, 80));
+
+    JLabel lblValue = new JLabel(value);
+
+    lblValue.setFont(new Font("Segoe UI", Font.BOLD, 42));
+
+    lblValue.setForeground(color);
+
+    JLabel lblDesc = new JLabel("Dữ liệu realtime từ database");
+
+    lblDesc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+    lblDesc.setForeground(Color.GRAY);
+
+    card.add(lblTitle, BorderLayout.NORTH);
+
+    card.add(lblValue, BorderLayout.CENTER);
+
+    card.add(lblDesc, BorderLayout.SOUTH);
+
+    return card;
+}
 
     // ===== LOGOUT =====
     private void logout() {
