@@ -5,11 +5,18 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.RenderingHints;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -20,6 +27,8 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
+import javax.swing.border.EmptyBorder;
 
 import com.tuyensinh.DTO.UserDTO;
 import com.tuyensinh.config.HibernateUtil;
@@ -30,119 +39,159 @@ public class MainFrame extends JFrame {
     private JPanel mainContent;
     private CardLayout cardLayout;
 
+    // Các nhãn để hiển thị số liệu thống kê realtime
+    private JLabel lblTongThiSinh, lblTongNganh, lblHoSoXetTuyen;
+    
+    // Quản lý trạng thái menu
+    private List<JButton> menuButtons = new ArrayList<>();
+    private final Color defaultMenuColor = new Color(30, 39, 46);
+    private final Color hoverMenuColor = new Color(44, 62, 80);
+    private final Color activeMenuColor = new Color(52, 152, 219); // Xanh sáng khi được chọn
+
     public MainFrame(UserDTO user) {
         this.currentUser = user;
         initComponents();
+        loadDashboardDataAsync(); // Tải dữ liệu DB ngầm
     }
 
     private void initComponents() {
-
-        setTitle("Tuyển Sinh 2025");
-        setSize(1200, 750);
+        setTitle("Hệ Thống Quản Lý Tuyển Sinh 2026");
+        setSize(1250, 780);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // ===== SIDEBAR =====
-        JPanel sidebar = new JPanel();
-        sidebar.setBackground(new Color(33, 43, 54));
-        sidebar.setPreferredSize(new Dimension(230, 0));
-        sidebar.setLayout(new BorderLayout());
+        // ================= SIDEBAR =================
+        JPanel sidebar = new JPanel(new BorderLayout());
+        sidebar.setBackground(defaultMenuColor); 
+        sidebar.setPreferredSize(new Dimension(260, 0));
 
-        // ===== LOGO =====
+        // ----- Logo Panel -----
         JPanel logoPanel = new JPanel();
-        logoPanel.setBackground(new Color(25, 32, 40));
-        logoPanel.setPreferredSize(new Dimension(230, 80));
+        logoPanel.setBackground(new Color(22, 30, 35));
+        logoPanel.setPreferredSize(new Dimension(260, 90));
+        logoPanel.setLayout(new GridBagLayout()); // Căn giữa logo hoàn hảo
 
         JLabel lblLogo = new JLabel("TUYỂN SINH");
         lblLogo.setForeground(Color.WHITE);
-        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 22));
-
+        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 24));
         logoPanel.add(lblLogo);
-
         sidebar.add(logoPanel, BorderLayout.NORTH);
 
-        // ===== MENU =====
+        // ----- Menu Panel -----
         JPanel menuPanel = new JPanel();
-        menuPanel.setBackground(new Color(33, 43, 54));
-        menuPanel.setLayout(new GridLayout(0, 1, 0, 8));
-        menuPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
+        menuPanel.setBackground(defaultMenuColor);
+        menuPanel.setLayout(new GridLayout(10, 1, 0, 8));
+        menuPanel.setBorder(new EmptyBorder(25, 15, 20, 15));
 
         String[] menus = {
-                "Trang chủ",
-                "Ngành",
-                "Tổ hợp",
-                "Ngành - Tổ hợp",
-                "Thí sinh",
-                "Điểm thi",
-                "Điểm cộng",
-                "Nguyện vọng",
-                "Xét tuyển"
+                "Trang chủ", "Ngành", "Tổ hợp", "Ngành - Tổ hợp",
+                "Thí sinh", "Điểm thi", "Điểm cộng", "Nguyện vọng", "Xét tuyển"
         };
 
-        for (String m : menus) {
-
-            JButton btn = new JButton(m);
-
+        for (String menuName : menus) {
+            JButton btn = new JButton(menuName); 
             btn.setFocusPainted(false);
             btn.setBorderPainted(false);
-            btn.setBackground(new Color(33, 43, 54));
-            btn.setForeground(Color.WHITE);
+            btn.setBackground(defaultMenuColor);
+            btn.setForeground(new Color(200, 208, 216));
             btn.setHorizontalAlignment(SwingConstants.LEFT);
-            btn.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            btn.setFont(new Font("Segoe UI", Font.PLAIN, 16));
             btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btn.setBorder(new EmptyBorder(12, 25, 12, 25));
 
-            btn.setPreferredSize(new Dimension(200, 45));
-
-            // ===== HOVER =====
+            // Hiệu ứng Hover mượt mà, không chèn lên màu Active
             btn.addMouseListener(new java.awt.event.MouseAdapter() {
-
                 public void mouseEntered(java.awt.event.MouseEvent evt) {
-                    btn.setBackground(new Color(52, 73, 94));
+                    if (btn.getBackground() != activeMenuColor) {
+                        btn.setBackground(hoverMenuColor);
+                        btn.setForeground(Color.WHITE);
+                    }
                 }
-
                 public void mouseExited(java.awt.event.MouseEvent evt) {
-                    btn.setBackground(new Color(33, 43, 54));
+                    if (btn.getBackground() != activeMenuColor) {
+                        btn.setBackground(defaultMenuColor);
+                        btn.setForeground(new Color(200, 208, 216));
+                    }
                 }
             });
 
-            // ===== CHANGE PANEL =====
-            btn.addActionListener(e -> cardLayout.show(mainContent, m));
+            // Sự kiện Click: Chuyển tab và đổi màu giữ nếp
+            btn.addActionListener(e -> {
+                cardLayout.show(mainContent, menuName);
+                for (JButton b : menuButtons) {
+                    b.setBackground(defaultMenuColor);
+                    b.setForeground(new Color(200, 208, 216));
+                    b.setFont(new Font("Segoe UI", Font.PLAIN, 16)); // Trả về font thường
+                }
+                btn.setBackground(activeMenuColor);
+                btn.setForeground(Color.WHITE);
+                btn.setFont(new Font("Segoe UI", Font.BOLD, 16)); // In đậm menu đang chọn
+            });
 
+            menuButtons.add(btn);
             menuPanel.add(btn);
+        }
+        
+        // Mặc định bôi đen menu "Trang chủ"
+        if (!menuButtons.isEmpty()) {
+            menuButtons.get(0).setBackground(activeMenuColor);
+            menuButtons.get(0).setForeground(Color.WHITE);
+            menuButtons.get(0).setFont(new Font("Segoe UI", Font.BOLD, 16));
         }
 
         sidebar.add(menuPanel, BorderLayout.CENTER);
 
-        // ===== TOPBAR =====
+        // ================= TOPBAR =================
         JPanel topbar = new JPanel(new BorderLayout());
-        topbar.setPreferredSize(new Dimension(0, 60));
+        topbar.setPreferredSize(new Dimension(0, 70));
         topbar.setBackground(Color.WHITE);
-        topbar.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        topbar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(235, 235, 235))); 
 
-        JLabel lblWelcome = new JLabel(
-                "Xin chào, " + currentUser.getUsername()
-        );
+        JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 30, 20));
+        userInfoPanel.setOpaque(false);
+        JLabel lblWelcome = new JLabel("Xin chào, " + currentUser.getUsername());
+        lblWelcome.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        lblWelcome.setForeground(new Color(60, 60, 60));
+        userInfoPanel.add(lblWelcome);
 
-        lblWelcome.setFont(new Font("Segoe UI", Font.BOLD, 18));
-
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 30, 15));
+        actionPanel.setOpaque(false);
+        
+        // Nút đăng xuất phong cách Flat
         JButton btnLogout = new JButton("Đăng xuất");
         btnLogout.setFocusPainted(false);
-        btnLogout.setBackground(new Color(231, 76, 60));
-        btnLogout.setForeground(Color.WHITE);
-
+        btnLogout.setBackground(new Color(245, 245, 245)); 
+        btnLogout.setForeground(new Color(80, 80, 80));
+        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLogout.setPreferredSize(new Dimension(120, 38));
+        btnLogout.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
+        
+        // Hiệu ứng khi rê chuột vào nút Đăng xuất
+        btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btnLogout.setBackground(new Color(231, 76, 60));
+                btnLogout.setForeground(Color.WHITE);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btnLogout.setBackground(new Color(245, 245, 245));
+                btnLogout.setForeground(new Color(80, 80, 80));
+            }
+        });
+        
         btnLogout.addActionListener(e -> logout());
+        actionPanel.add(btnLogout);
 
-        topbar.add(lblWelcome, BorderLayout.WEST);
-        topbar.add(btnLogout, BorderLayout.EAST);
+        topbar.add(userInfoPanel, BorderLayout.WEST);
+        topbar.add(actionPanel, BorderLayout.EAST);
 
-        // ===== CONTENT =====
+        // ================= CONTENT =================
         cardLayout = new CardLayout();
-
         mainContent = new JPanel(cardLayout);
-        mainContent.setBackground(new Color(245, 246, 250));
-        mainContent.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        mainContent.setBackground(new Color(248, 249, 250)); // Màu nền xám sáng thanh lịch
 
+        // Thêm các giao diện chức năng
         mainContent.add(createHomePanel(), "Trang chủ");
         mainContent.add(new NganhPanel(), "Ngành");
         mainContent.add(new ToHopPanel(), "Tổ hợp");
@@ -153,220 +202,175 @@ public class MainFrame extends JFrame {
         mainContent.add(new NguyenVongPanel(), "Nguyện vọng");
         mainContent.add(new XetTuyenPanel(), "Xét tuyển");
 
-        // ===== RIGHT PANEL =====
+        // ================= LẮP RÁP =================
         JPanel rightPanel = new JPanel(new BorderLayout());
-
         rightPanel.add(topbar, BorderLayout.NORTH);
         rightPanel.add(mainContent, BorderLayout.CENTER);
 
         add(sidebar, BorderLayout.WEST);
         add(rightPanel, BorderLayout.CENTER);
-
         setVisible(true);
     }
 
-    // ===== HOME PANEL =====
+    // ================= HOME PANEL =================
     private JPanel createHomePanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(248, 249, 250));
+        panel.setBorder(new EmptyBorder(45, 55, 45, 55));
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setBackground(new Color(245, 247, 250));
-    panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        // --- HEADER ---
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setOpaque(false);
 
-    // ================= THỐNG KÊ TỪ DB =================
+        JLabel lblTitle = new JLabel("TỔNG QUAN HỆ THỐNG");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblTitle.setForeground(new Color(40, 40, 40));
 
-    int tongThiSinh = 0;
-    int tongNganh = 0;
-    int tongXetTuyen = 0;
+        JLabel lblSub = new JLabel("Dữ liệu được cập nhật theo thời gian thực");
+        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        lblSub.setForeground(new Color(140, 140, 140));
 
-    try {
+        header.add(lblTitle);
+        header.add(Box.createVerticalStrut(8));
+        header.add(lblSub);
 
-        Connection conn = HibernateUtil
-                .getSessionFactory()
-                .openSession()
-                .doReturningWork(c -> c);
+        panel.add(header, BorderLayout.NORTH);
 
-        // ===== Tổng thí sinh =====
-        String sqlThiSinh = "SELECT COUNT(*) FROM xt_thisinhxettuyen25";
+        // --- CENTER CARDS ---
+        JPanel center = new JPanel(new GridLayout(1, 3, 40, 40));
+        center.setOpaque(false);
+        center.setBorder(new EmptyBorder(45, 0, 0, 0));
 
-        PreparedStatement ps1 = conn.prepareStatement(sqlThiSinh);
+        lblTongThiSinh = new JLabel("Đang tải...");
+        lblTongNganh = new JLabel("Đang tải...");
+        lblHoSoXetTuyen = new JLabel("Đang tải...");
 
-        ResultSet rs1 = ps1.executeQuery();
+        center.add(createDashboardCard("Tổng Thí Sinh", lblTongThiSinh, new Color(41, 128, 185))); 
+        center.add(createDashboardCard("Tổng Ngành", lblTongNganh, new Color(39, 174, 96)));    
+        center.add(createDashboardCard("Hồ Sơ Xét Tuyển", lblHoSoXetTuyen, new Color(142, 68, 173))); 
 
-        if (rs1.next()) {
-            tongThiSinh = rs1.getInt(1);
-        }
+        panel.add(center, BorderLayout.CENTER);
 
-        // ===== Tổng ngành =====
-        String sqlNganh = "SELECT COUNT(*) FROM xt_nganh";
+        // --- FOOTER ---
+        JLabel footer = new JLabel("SGU Admissions Management System © 2026", SwingConstants.CENTER);
+        footer.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        footer.setForeground(new Color(170, 170, 170));
+        footer.setBorder(new EmptyBorder(40, 0, 0, 0));
+        panel.add(footer, BorderLayout.SOUTH);
 
-        PreparedStatement ps2 = conn.prepareStatement(sqlNganh);
-
-        ResultSet rs2 = ps2.executeQuery();
-
-        if (rs2.next()) {
-            tongNganh = rs2.getInt(1);
-        }
-
-        // ===== Tổng hồ sơ xét tuyển =====
-        String sqlXT = "SELECT COUNT(*) FROM xt_diemthixettuyen";
-
-        PreparedStatement ps3 = conn.prepareStatement(sqlXT);
-
-        ResultSet rs3 = ps3.executeQuery();
-
-        if (rs3.next()) {
-            tongXetTuyen = rs3.getInt(1);
-        }
-
-    } catch (Exception e) {
-        e.printStackTrace();
+        return panel;
     }
 
-    // ================= HEADER =================
+    // Sử dụng RoundedPanel để tạo góc bo tròn cho Card
+    private JPanel createDashboardCard(String title, JLabel valueLabel, Color color) {
+        RoundedPanel card = new RoundedPanel(20, Color.WHITE); // Góc bo tròn bán kính 20
+        card.setLayout(new BorderLayout());
+        card.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-    JPanel header = new JPanel(new BorderLayout());
-    header.setOpaque(false);
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTitle.setForeground(new Color(120, 120, 120));
 
-    JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ TUYỂN SINH 2025");
+        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 46));
+        valueLabel.setForeground(color);
+        valueLabel.setBorder(new EmptyBorder(15, 0, 0, 0));
 
-    lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 32));
-    lblTitle.setForeground(new Color(44, 62, 80));
+        card.add(lblTitle, BorderLayout.NORTH);
+        card.add(valueLabel, BorderLayout.CENTER);
+        return card;
+    }
 
-    JLabel lblSub = new JLabel(
-            "Chào mừng bạn đến với hệ thống quản lý tuyển sinh đại học"
-    );
+    // ================= LOAD DATA BACKGROUND =================
+    private void loadDashboardDataAsync() {
+        SwingWorker<int[], Void> worker = new SwingWorker<>() {
+            @Override
+            protected int[] doInBackground() throws Exception {
+                int[] results = new int[3];
+                try {
+                    Connection conn = HibernateUtil.getSessionFactory().openSession().doReturningWork(c -> c);
 
-    lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-    lblSub.setForeground(Color.GRAY);
+                    PreparedStatement ps1 = conn.prepareStatement("SELECT COUNT(*) FROM xt_thisinhxettuyen25");
+                    ResultSet rs1 = ps1.executeQuery();
+                    if (rs1.next()) results[0] = rs1.getInt(1);
 
-    JPanel titleBox = new JPanel();
+                    PreparedStatement ps2 = conn.prepareStatement("SELECT COUNT(*) FROM xt_nganh");
+                    ResultSet rs2 = ps2.executeQuery();
+                    if (rs2.next()) results[1] = rs2.getInt(1);
 
-    titleBox.setOpaque(false);
+                    PreparedStatement ps3 = conn.prepareStatement("SELECT COUNT(*) FROM xt_diemthixettuyen");
+                    ResultSet rs3 = ps3.executeQuery();
+                    if (rs3.next()) results[2] = rs3.getInt(1);
 
-    titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
+                    conn.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return results;
+            }
 
-    titleBox.add(lblTitle);
-    titleBox.add(Box.createVerticalStrut(10));
-    titleBox.add(lblSub);
+            @Override
+            protected void done() {
+                try {
+                    int[] results = get();
+                    lblTongThiSinh.setText(String.format("%,d", results[0]));
+                    lblTongNganh.setText(String.format("%,d", results[1]));
+                    lblHoSoXetTuyen.setText(String.format("%,d", results[2]));
+                } catch (Exception e) {
+                    lblTongThiSinh.setText("Lỗi");
+                    lblTongNganh.setText("Lỗi");
+                    lblHoSoXetTuyen.setText("Lỗi");
+                }
+            }
+        };
+        worker.execute();
+    }
 
-    header.add(titleBox, BorderLayout.WEST);
-
-    panel.add(header, BorderLayout.NORTH);
-
-    // ================= CENTER =================
-
-    JPanel center = new JPanel(new GridLayout(1, 3, 20, 20));
-
-    center.setOpaque(false);
-
-    center.setBorder(BorderFactory.createEmptyBorder(
-            40,
-            0,
-            0,
-            0
-    ));
-
-    center.add(createDashboardCard(
-            " Tổng thí sinh",
-            String.valueOf(tongThiSinh),
-            new Color(52, 152, 219)
-    ));
-
-    center.add(createDashboardCard(
-            " Tổng ngành",
-            String.valueOf(tongNganh),
-            new Color(46, 204, 113)
-    ));
-
-    center.add(createDashboardCard(
-            " Hồ sơ xét tuyển",
-            String.valueOf(tongXetTuyen),
-            new Color(155, 89, 182)
-    ));
-
-    panel.add(center, BorderLayout.CENTER);
-
-    // ================= FOOTER =================
-
-    JLabel footer = new JLabel(
-            "Admissions Management System © 2025",
-            SwingConstants.CENTER
-    );
-
-    footer.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-
-    footer.setForeground(Color.GRAY);
-
-    footer.setBorder(BorderFactory.createEmptyBorder(
-            20,
-            0,
-            0,
-            0
-    ));
-
-    panel.add(footer, BorderLayout.SOUTH);
-
-    return panel;
-}
-
-/**
- * Dashboard Card
- */
-private JPanel createDashboardCard(
-        String title,
-        String value,
-        Color color
-) {
-
-    JPanel card = new JPanel(new BorderLayout());
-
-    card.setBackground(Color.WHITE);
-
-    card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(230, 230, 230)),
-            BorderFactory.createEmptyBorder(25, 25, 25, 25)
-    ));
-
-    JLabel lblTitle = new JLabel(title);
-
-    lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-
-    lblTitle.setForeground(new Color(80, 80, 80));
-
-    JLabel lblValue = new JLabel(value);
-
-    lblValue.setFont(new Font("Segoe UI", Font.BOLD, 42));
-
-    lblValue.setForeground(color);
-
-    JLabel lblDesc = new JLabel("Dữ liệu realtime từ database");
-
-    lblDesc.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-
-    lblDesc.setForeground(Color.GRAY);
-
-    card.add(lblTitle, BorderLayout.NORTH);
-
-    card.add(lblValue, BorderLayout.CENTER);
-
-    card.add(lblDesc, BorderLayout.SOUTH);
-
-    return card;
-}
-
-    // ===== LOGOUT =====
+    // ================= LOGOUT =================
     private void logout() {
-
         int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Bạn có muốn đăng xuất?",
-                "Xác nhận",
-                JOptionPane.YES_NO_OPTION
+                this, "Bạn có chắc chắn muốn đăng xuất?", "Xác nhận",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE
         );
-
         if (confirm == JOptionPane.YES_OPTION) {
             dispose();
             new LoginForm();
+        }
+    }
+
+    // ================= CLASS CUSTOM BO GÓC =================
+    // Lớp nội (inner class) giúp vẽ JPanel có góc bo tròn mượt mà
+    class RoundedPanel extends JPanel {
+        private int cornerRadius;
+        private Color backgroundColor;
+
+        public RoundedPanel(int radius, Color bgColor) {
+            super();
+            this.cornerRadius = radius;
+            this.backgroundColor = bgColor;
+            setOpaque(false); // Bắt buộc false để không vẽ viền vuông mặc định
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            // Bật khử răng cưa để đường cong mượt mà
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Vẽ đổ bóng mờ nhẹ (Shadow effect)
+            g2.setColor(new Color(235, 235, 235));
+            g2.fillRoundRect(3, 3, getWidth() - 3, getHeight() - 3, cornerRadius, cornerRadius);
+            
+            // Vẽ nền chính của Panel
+            g2.setColor(backgroundColor);
+            g2.fillRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
+            
+            // Vẽ viền thanh mảnh bọc bên ngoài
+            g2.setColor(new Color(225, 225, 225));
+            g2.drawRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
+            
+            g2.dispose();
         }
     }
 }
