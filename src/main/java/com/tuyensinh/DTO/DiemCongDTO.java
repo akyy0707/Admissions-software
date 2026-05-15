@@ -1,38 +1,39 @@
 package com.tuyensinh.DTO;
 
 public class DiemCongDTO {
+
     private int id;
     private String cccd;
     private String maNganh;
     private String maToHop;
     private String phuongThuc;
+
     private double diemCC;
     private double diemUuTien;
+
     private double diemTong;
     private String dcKeys;
 
     public DiemCongDTO() {
     }
 
-    public DiemCongDTO(String cccd, String maNganh, String maToHop,
-            String phuongThuc, double diemCC, double diemUuTien) {
-        this.cccd = cccd;
-        this.maNganh = maNganh;
-        this.maToHop = maToHop;
-        this.phuongThuc = phuongThuc;
-        this.diemCC = diemCC;
-        this.diemUuTien = diemUuTien;
-        this.diemTong = diemCC + diemUuTien;
-        this.dcKeys = cccd + "_" + maNganh + "_" + maToHop;
+    // ================= GETTERS & SETTERS =================
+
+    public int getId() {
+        return id;
     }
 
-    // Getter & Setter
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getCccd() {
         return cccd;
     }
 
     public void setCccd(String cccd) {
         this.cccd = cccd;
+        updateKeys();
     }
 
     public String getMaNganh() {
@@ -41,6 +42,7 @@ public class DiemCongDTO {
 
     public void setMaNganh(String maNganh) {
         this.maNganh = maNganh;
+        updateKeys();
     }
 
     public String getMaToHop() {
@@ -49,6 +51,7 @@ public class DiemCongDTO {
 
     public void setMaToHop(String maToHop) {
         this.maToHop = maToHop;
+        updateKeys();
     }
 
     public String getPhuongThuc() {
@@ -65,29 +68,38 @@ public class DiemCongDTO {
 
     public void setDiemCC(double diemCC) {
         this.diemCC = diemCC;
+        updateTong();
     }
 
     public double getDiemUuTien() {
         return diemUuTien;
     }
+    
 
     public void setDiemUuTien(double diemUuTien) {
         this.diemUuTien = diemUuTien;
+        updateTong();
     }
 
     public double getDiemTong() {
         return diemTong;
     }
-
-    public void setDiemTong(double diemTong) {
+public void setDiemTong(double diemTong) {
         this.diemTong = diemTong;
     }
-
     public String getDcKeys() {
         return dcKeys;
     }
 
-    public void setDcKeys(String dcKeys) {
-        this.dcKeys = dcKeys;
+    // ================= LOGIC INTERNAL =================
+
+    private void updateTong() {
+        this.diemTong = this.diemCC + this.diemUuTien;
+    }
+
+    private void updateKeys() {
+        if (cccd != null && maNganh != null && maToHop != null) {
+            this.dcKeys = cccd + "_" + maNganh + "_" + maToHop;
+        }
     }
 }

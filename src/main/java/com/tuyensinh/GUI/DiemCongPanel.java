@@ -6,10 +6,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridLayout;
-import java.awt.RenderingHints;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,15 +30,18 @@ public class DiemCongPanel extends JPanel {
 
     private JTable table;
     private DefaultTableModel model;
+
     private DiemCongBUS diemCongBUS;
+
     private Connection conn;
 
-    // Các nhãn thống kê
+    // thống kê
     private JLabel lblTongHoSo;
     private JLabel lblTongDiem;
     private JLabel lblPT4;
 
     public DiemCongPanel() {
+
         conn = HibernateUtil
                 .getSessionFactory()
                 .openSession()
@@ -49,166 +49,248 @@ public class DiemCongPanel extends JPanel {
 
         diemCongBUS = new DiemCongBUS(conn);
 
-        setLayout(new BorderLayout(20, 20));
-        setBackground(new Color(248, 249, 250)); // Nền xám sáng hiện đại
-        setBorder(new EmptyBorder(25, 25, 25, 25));
+        setLayout(new BorderLayout(15, 15));
 
-        // Khởi tạo các label thống kê trước khi nạp vào Panel
-        lblTongHoSo = new JLabel("0");
-        lblTongDiem = new JLabel("0");
-        lblPT4 = new JLabel("0");
+        setBackground(new Color(245, 247, 250));
 
-        add(createStatisticPanel(), BorderLayout.NORTH);
+        setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        add(createTopPanel(), BorderLayout.NORTH);
+
         add(createTablePanel(), BorderLayout.CENTER);
 
         loadDataFromDB();
     }
 
-    // ================= STATISTIC =================
-    private JPanel createStatisticPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 3, 30, 30));
+    // ================= TOP =================
+
+    private JPanel createTopPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout());
+
         panel.setOpaque(false);
 
-        panel.add(createStatCard("Tổng Hồ Sơ Nhập", lblTongHoSo, new Color(41, 128, 185))); // Xanh dương
-        panel.add(createStatCard("Tổng Điểm Cộng", lblTongDiem, new Color(39, 174, 96)));    // Xanh lá
-        panel.add(createStatCard("Phương Thức 4 (PT4)", lblPT4, new Color(142, 68, 173)));     // Tím
+        JLabel lblTitle = new JLabel("QUẢN LÝ ĐIỂM CỘNG");
+
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
+
+        panel.add(lblTitle, BorderLayout.WEST);
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+
+        right.setOpaque(false);
+
+        JButton btnImport = createButton(
+                "Import Excel",
+                new Color(46, 204, 113)
+        );
+
+        JButton btnRefresh = createButton(
+                "Làm mới",
+                new Color(52, 152, 219)
+        );
+
+        btnImport.addActionListener(e -> importExcel());
+
+        btnRefresh.addActionListener(e -> loadDataFromDB());
+
+        right.add(btnImport);
+
+        right.add(btnRefresh);
+
+        panel.add(right, BorderLayout.EAST);
 
         return panel;
     }
 
-    private JPanel createStatCard(String title, JLabel valueLabel, Color color) {
-        RoundedPanel card = new RoundedPanel(20, Color.WHITE);
-        card.setLayout(new BorderLayout());
-        card.setBorder(new EmptyBorder(20, 25, 20, 25));
+    // ================= TABLE PANEL =================
 
-        JLabel lblTitle = new JLabel(title);
-        lblTitle.setForeground(new Color(130, 130, 130));
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-
-        valueLabel.setForeground(color);
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
-
-        card.add(lblTitle, BorderLayout.NORTH);
-        card.add(valueLabel, BorderLayout.CENTER);
-
-        return card;
-    }
-
-    // ================= TABLE & TOOLBAR =================
     private JPanel createTablePanel() {
-        RoundedPanel panel = new RoundedPanel(20, Color.WHITE);
-        panel.setLayout(new BorderLayout(10, 15));
-        panel.setBorder(new EmptyBorder(20, 25, 20, 25));
 
-        // ===== TOP BAR (Title + Actions) =====
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
 
-        JLabel lblTitle = new JLabel("Dữ Liệu Điểm Cộng Xét Tuyển");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTitle.setForeground(new Color(50, 50, 50));
-        topPanel.add(lblTitle, BorderLayout.WEST);
+        panel.setBackground(Color.WHITE);
 
-        // ===== TOOLBAR (Buttons) =====
-        JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        toolBar.setOpaque(false);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(225, 225, 225)),
+                new EmptyBorder(15, 15, 15, 15)
+        ));
 
-        JButton btnImport = createFlatButton("Import Excel", new Color(46, 204, 113), new Color(39, 174, 96));
-        JButton btnRefresh = createFlatButton("Làm mới", new Color(52, 152, 219), new Color(41, 128, 185));
+        // ===== INFO =====
 
-        btnImport.addActionListener(e -> importExcel());
-        btnRefresh.addActionListener(e -> loadDataFromDB());
+        JPanel infoPanel = new JPanel(new GridLayout(1, 3, 15, 15));
 
-        toolBar.add(btnImport);
-        toolBar.add(btnRefresh);
+        infoPanel.setBackground(Color.WHITE);
 
-        topPanel.add(toolBar, BorderLayout.EAST);
-        panel.add(topPanel, BorderLayout.NORTH);
+        lblTongHoSo = new JLabel("0");
+        lblTongDiem = new JLabel("0");
+        lblPT4 = new JLabel("0");
+
+        infoPanel.add(createStatCard(
+                "Tổng hồ sơ",
+                lblTongHoSo,
+                new Color(52, 152, 219)
+        ));
+
+        infoPanel.add(createStatCard(
+                "Tổng điểm cộng",
+                lblTongDiem,
+                new Color(46, 204, 113)
+        ));
+
+        infoPanel.add(createStatCard(
+                "PT4",
+                lblPT4,
+                new Color(155, 89, 182)
+        ));
+
+        panel.add(infoPanel, BorderLayout.NORTH);
 
         // ===== TABLE =====
-        String[] columns = {"CCCD", "Mã ngành", "Mã tổ hợp", "Phương thức", "Điểm CC", "Điểm UT", "Điểm tổng"};
-        model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Chống sửa dữ liệu trực tiếp trên bảng
-            }
+
+        String[] columns = {
+                "CCCD",
+                "Mã ngành",
+                "Mã tổ hợp",
+                "Phương thức",
+                "Điểm CC",
+                "Điểm UT",
+                "Điểm tổng"
         };
 
-        table = new JTable(model);
-        table.setRowHeight(45);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        table.setSelectionBackground(new Color(220, 235, 252));
-        table.setSelectionForeground(new Color(30, 30, 30));
-        table.setShowVerticalLines(false);
-        table.setShowHorizontalLines(true);
-        table.setGridColor(new Color(240, 240, 240));
+        model = new DefaultTableModel(columns, 0);
 
-        // Custom Header
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 15));
-        table.getTableHeader().setBackground(new Color(245, 247, 250));
-        table.getTableHeader().setForeground(new Color(80, 80, 80));
-        table.getTableHeader().setPreferredSize(new Dimension(0, 45));
-        table.getTableHeader().setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)));
+        table = new JTable(model);
+
+        table.setRowHeight(38);
+
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        table.getTableHeader().setFont(
+                new Font("Segoe UI", Font.BOLD, 14)
+        );
+
+        table.getTableHeader().setBackground(
+                new Color(245, 246, 250)
+        );
+
+        table.setShowGrid(false);
+
+        table.setIntercellSpacing(new Dimension(0, 0));
 
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
-        scrollPane.getViewport().setBackground(Color.WHITE);
+
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
     }
 
-    // ================= CUSTOM BUTTON =================
-    private JButton createFlatButton(String text, Color bgColor, Color hoverColor) {
-        JButton btn = new JButton(text);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBackground(bgColor);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btn.setPreferredSize(new Dimension(130, 40));
+    // ================= CARD =================
 
-        // Hover Effect
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(hoverColor);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(bgColor);
-            }
-        });
+    private JPanel createStatCard(
+            String title,
+            JLabel valueLabel,
+            Color color
+    ) {
+
+        JPanel card = new JPanel(new BorderLayout());
+
+        card.setBackground(Color.WHITE);
+
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(230, 230, 230)),
+                new EmptyBorder(15, 20, 15, 20)
+        ));
+
+        JLabel lblTitle = new JLabel(title);
+
+        lblTitle.setForeground(Color.GRAY);
+
+        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        valueLabel.setForeground(color);
+
+        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+
+        card.add(lblTitle, BorderLayout.NORTH);
+
+        card.add(valueLabel, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    // ================= BUTTON =================
+
+    private JButton createButton(String text, Color color) {
+
+        JButton btn = new JButton(text);
+
+        btn.setBackground(color);
+
+        btn.setForeground(Color.WHITE);
+
+        btn.setFocusPainted(false);
+
+        btn.setBorderPainted(false);
+
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        btn.setPreferredSize(new Dimension(140, 40));
 
         return btn;
     }
 
     // ================= IMPORT =================
+
     private void importExcel() {
+
         JFileChooser chooser = new JFileChooser();
+
         int result = chooser.showOpenDialog(this);
 
         if (result == JFileChooser.APPROVE_OPTION) {
+
             File file = chooser.getSelectedFile();
+
             try {
+
                 diemCongBUS.importFromExcel(file);
-                JOptionPane.showMessageDialog(this, "Import dữ liệu từ Excel thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Import Excel thành công!"
+                );
+
                 loadDataFromDB();
+
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Import thất bại! Vui lòng kiểm tra lại định dạng file.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Import thất bại!"
+                );
+
                 e.printStackTrace();
             }
         }
     }
 
     // ================= LOAD DB =================
+
     private void loadDataFromDB() {
+
         model.setRowCount(0);
+
         int tongHoSo = 0;
         double tongDiem = 0;
         int tongPT4 = 0;
 
         try {
+
             String sql = """
                     SELECT ts_cccd,
                            manganh,
@@ -221,9 +303,11 @@ public class DiemCongPanel extends JPanel {
                     """;
 
             PreparedStatement ps = conn.prepareStatement(sql);
+
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
+
                 String cccd = rs.getString("ts_cccd");
                 String manganh = rs.getString("manganh");
                 String matohop = rs.getString("matohop");
@@ -234,10 +318,17 @@ public class DiemCongPanel extends JPanel {
                 double diemTong1 = rs.getDouble("diemTong");
 
                 model.addRow(new Object[]{
-                        cccd, manganh, matohop, phuongthuc, diemCC, diemUT, diemTong1
+                        cccd,
+                        manganh,
+                        matohop,
+                        phuongthuc,
+                        diemCC,
+                        diemUT,
+                        diemTong1
                 });
 
                 tongHoSo++;
+
                 tongDiem += diemTong1;
 
                 if ("PT4".equals(phuongthuc)) {
@@ -245,47 +336,20 @@ public class DiemCongPanel extends JPanel {
                 }
             }
 
-            lblTongHoSo.setText(String.format("%,d", tongHoSo));
-            lblTongDiem.setText(String.format("%,.2f", tongDiem));
-            lblPT4.setText(String.format("%,d", tongPT4));
+            lblTongHoSo.setText(String.valueOf(tongHoSo));
+
+            lblTongDiem.setText(String.format("%.2f", tongDiem));
+
+            lblPT4.setText(String.valueOf(tongPT4));
 
         } catch (Exception e) {
+
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Không thể tải dữ liệu từ cơ sở dữ liệu!", "Lỗi kết nối", JOptionPane.ERROR_MESSAGE);
-        }
-    }
 
-    // ================= CLASS CUSTOM BO GÓC =================
-    class RoundedPanel extends JPanel {
-        private int cornerRadius;
-        private Color backgroundColor;
-
-        public RoundedPanel(int radius, Color bgColor) {
-            super();
-            this.cornerRadius = radius;
-            this.backgroundColor = bgColor;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            // Đổ bóng mờ nhẹ
-            g2.setColor(new Color(230, 230, 230));
-            g2.fillRoundRect(3, 3, getWidth() - 3, getHeight() - 3, cornerRadius, cornerRadius);
-            
-            // Vẽ màu nền
-            g2.setColor(backgroundColor);
-            g2.fillRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
-            
-            // Vẽ viền thanh mảnh
-            g2.setColor(new Color(225, 225, 225));
-            g2.drawRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
-            
-            g2.dispose();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không thể tải dữ liệu từ database!"
+            );
         }
     }
 }

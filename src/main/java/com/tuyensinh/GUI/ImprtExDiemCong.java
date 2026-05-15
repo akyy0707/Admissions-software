@@ -1,16 +1,18 @@
 package com.tuyensinh.GUI;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.dnd.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.sql.Connection;
 import java.util.List;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 import com.tuyensinh.BUS.DiemCongBUS;
 import com.tuyensinh.config.DB;
@@ -32,7 +34,7 @@ public class ImprtExDiemCong extends JPanel {
         // Kết nối DB trong constructor
         try {
             conn = DB.getConn();
-            bus = new DiemCongBUS(conn);
+            bus = new DiemCongBUS();
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi kết nối cơ sở dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);

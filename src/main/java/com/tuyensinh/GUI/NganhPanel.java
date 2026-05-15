@@ -51,29 +51,16 @@ public class NganhPanel extends JPanel {
 
     // ================= STATISTIC =================
     private JPanel createStatisticPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 4, 25, 25));
+        // Tăng lên 6 cột để chứa đủ các thẻ thống kê mới
+        JPanel panel = new JPanel(new GridLayout(1, 6, 15, 15));
         panel.setOpaque(false);
 
-        List<NganhDTO> list = nganhBUS.getAll();
-
-        int tongNganh = 0;
-        int tongChiTieu = 0;
-        int tongDGNL = 0;
-        int tongTHPT = 0;
-
-        if (list != null) {
-            tongNganh = list.size();
-            for (NganhDTO n : list) {
-                tongChiTieu += n.getChiTieu();
-                if ("1".equals(n.getDgnl())) tongDGNL++;
-                if ("1".equals(n.getThpt())) tongTHPT++;
-            }
-        }
-
-        panel.add(createStatCard("Tổng ngành", String.valueOf(tongNganh), new Color(41, 128, 185)));
-        panel.add(createStatCard("Chỉ tiêu", String.valueOf(tongChiTieu), new Color(39, 174, 96)));
-        panel.add(createStatCard("ĐGNL", String.valueOf(tongDGNL), new Color(142, 68, 173)));
-        panel.add(createStatCard("THPT", String.valueOf(tongTHPT), new Color(211, 84, 0)));
+        panel.add(createStatCard("Tổng ngành", String.valueOf(nganhBUS.getTongNganh()), new Color(52, 152, 219)));
+        panel.add(createStatCard("Chỉ tiêu", String.valueOf(nganhBUS.getTongChiTieu()), new Color(46, 204, 113)));
+        panel.add(createStatCard("ĐGNL", String.valueOf(nganhBUS.getTongDGNL()), new Color(155, 89, 182)));
+        panel.add(createStatCard("Tuyển thẳng", String.valueOf(nganhBUS.getTongTuyenThang()), new Color(230, 126, 182)));
+        panel.add(createStatCard("THPT", String.valueOf(nganhBUS.getTongTHPT()), new Color(211, 84, 0)));
+        panel.add(createStatCard("VSAT", String.valueOf(nganhBUS.getTongVSAT()), new Color(243, 156, 18)));
 
         return panel;
     }
@@ -81,15 +68,15 @@ public class NganhPanel extends JPanel {
     private JPanel createStatCard(String title, String value, Color color) {
         RoundedPanel card = new RoundedPanel(20, Color.WHITE);
         card.setLayout(new BorderLayout());
-        card.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
+        card.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
         JLabel lblTitle = new JLabel(title);
         lblTitle.setForeground(new Color(130, 130, 130));
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         JLabel lblValue = new JLabel(value);
         lblValue.setForeground(color);
-        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 36));
+        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 28));
 
         card.add(lblTitle, BorderLayout.NORTH);
         card.add(lblValue, BorderLayout.CENTER);
@@ -107,7 +94,7 @@ public class NganhPanel extends JPanel {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
 
-        JLabel lblTitle = new JLabel("Danh Sách Ngành Đào Tạo");
+        JLabel lblTitle = new JLabel("Danh Sách Ngành Tuyển Sinh");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitle.setForeground(new Color(50, 50, 50));
         topPanel.add(lblTitle, BorderLayout.WEST);
@@ -119,7 +106,6 @@ public class NganhPanel extends JPanel {
         txtSearch = new JTextField();
         txtSearch.setPreferredSize(new Dimension(250, 38));
         txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        // Padding cho TextField
         txtSearch.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(210, 210, 210), 1, true),
                 BorderFactory.createEmptyBorder(5, 10, 5, 10)
@@ -157,7 +143,10 @@ public class NganhPanel extends JPanel {
         panel.add(topPanel, BorderLayout.NORTH);
 
         // ===== TABLE =====
-        String[] columns = {"ID", "Mã ngành", "Tên ngành", "Tổ hợp gốc", "Chỉ tiêu", "Điểm sàn"};
+        String[] columns = {
+                "ID", "Mã ngành", "Tên ngành", "Tổ hợp", "Chỉ tiêu", 
+                "Điểm sàn", "Điểm trúng tuyển", "Phương thức", "Số NV"
+        };
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -167,14 +156,14 @@ public class NganhPanel extends JPanel {
 
         table = new JTable(model);
         table.setRowHeight(45);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         table.setSelectionBackground(new Color(220, 235, 252));
         table.setSelectionForeground(new Color(30, 30, 30));
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(true);
         table.setGridColor(new Color(240, 240, 240));
 
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 15));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setBackground(new Color(245, 247, 250));
         table.getTableHeader().setForeground(new Color(80, 80, 80));
         table.getTableHeader().setPreferredSize(new Dimension(0, 45));
@@ -212,20 +201,38 @@ public class NganhPanel extends JPanel {
         return btn;
     }
 
-    // ================= LOAD =================
+    // ================= FORMAT PHƯƠNG THỨC =================
+    private String formatPhuongThuc(Object thpt, Object dgnl, Object vsat, Object tuyenThang) {
+        StringBuilder sb = new StringBuilder();
+
+        if ("1".equals(String.valueOf(thpt))) sb.append("THPT, ");
+        if ("1".equals(String.valueOf(dgnl))) sb.append("ĐGNL, ");
+        if ("1".equals(String.valueOf(vsat))) sb.append("VSAT, ");
+        if ("1".equals(String.valueOf(tuyenThang))) sb.append("Tuyển thẳng, ");
+
+        if (sb.length() == 0) return "Chưa có";
+
+        return sb.substring(0, sb.length() - 2);
+    }
+
+    // ================= LOAD DATA =================
     private void loadData() {
         model.setRowCount(0);
-        List<NganhDTO> list = nganhBUS.getAll();
+        
+        List<Object[]> list = nganhBUS.getAllWithSoNV();
         if (list == null) return;
 
-        for (NganhDTO n : list) {
+        for (Object[] n : list) {
             model.addRow(new Object[]{
-                    n.getIdNganh(),
-                    n.getMaNganh(),
-                    n.getTenNganh(),
-                    n.getToHopGoc(),
-                    n.getChiTieu(),
-                    n.getDiemSan()
+                    n[0], // id
+                    n[1], // ma nganh
+                    n[2], // ten nganh
+                    n[3], // to hop
+                    n[4], // chi tieu
+                    n[5], // diem san
+                    n[6], // diem trung tuyen
+                    formatPhuongThuc(n[7], n[8], n[9], n[10]), // Phuong thuc
+                    n[11] // so NV
             });
         }
     }
@@ -286,7 +293,6 @@ public class NganhPanel extends JPanel {
             txtMa.setText(nganh.getMaNganh());
             txtTen.setText(nganh.getTenNganh());
             txtToHop.setText(nganh.getToHopGoc());
-            // txtChiTieu, txtDiemSan, checkbox... cần lấy thêm data nếu có lưu từ db
         }
 
         JButton btnSave = createFlatButton("Lưu Dữ Liệu", new Color(46, 204, 113), new Color(39, 174, 96));
