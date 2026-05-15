@@ -1,8 +1,21 @@
 package com.tuyensinh.BUS;
 
-import com.tuyensinh.DAO.*;
-import com.tuyensinh.DTO.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.tuyensinh.DAO.DiemThiDAO;
+import com.tuyensinh.DAO.NganhDAO;
+import com.tuyensinh.DAO.NganhToHopDAO;
+import com.tuyensinh.DAO.QuyDoiDAO;
+import com.tuyensinh.DAO.ToHopDAO;
+import com.tuyensinh.DTO.DiemThiDTO;
+import com.tuyensinh.DTO.NganhDTO;
+import com.tuyensinh.DTO.QuyDoiDTO;
+import com.tuyensinh.DTO.ThiSinhDTO;
+import com.tuyensinh.DTO.ToHopDTO;
 
 /**
  * XetTuyenBUS - Business Logic cho xét tuyển

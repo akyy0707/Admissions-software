@@ -1,9 +1,15 @@
 package com.tuyensinh.GUI;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.sql.Connection;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 
 import com.tuyensinh.BUS.DiemCongBUS;
 import com.tuyensinh.config.DB;
@@ -21,7 +27,7 @@ public class ImprtExDiemCong extends JPanel {
         // 🔥 FIX: kết nối DB trong constructor
         try {
             conn = DB.getConn();
-            bus = new DiemCongBUS(conn);
+            bus = new DiemCongBUS();
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi kết nối database!");
