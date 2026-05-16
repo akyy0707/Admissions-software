@@ -16,25 +16,23 @@ public class NganhDAO {
 
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 
-            String sql = """
-                SELECT 
-                    n.idnganh,
-                    n.manganh,
-                    n.tennganh,
-                    n.n_tohopgoc,
-                    n.n_chitieu,
-                    n.n_diemsan,
-                    n.n_diemtrungtuyen,
-                    n.n_dgnl,
-                    n.n_thpt,
-                    n.n_vsat,
-                    n.n_tuyenthang,
-                    COUNT(v.idnv) AS so_nv
-                FROM xt_nganh n
-                LEFT JOIN xt_nguyenvongxettuyen v 
-                    ON n.manganh COLLATE utf8_unicode_ci = v.nv_manganh
-                GROUP BY n.idnganh
-            """;
+            String sql = "SELECT " +
+                    "    n.idnganh, " +
+                    "    n.manganh, " +
+                    "    n.tennganh, " +
+                    "    n.n_tohopgoc, " +
+                    "    n.n_chitieu, " +
+                    "    n.n_diemsan, " +
+                    "    n.n_diemtrungtuyen, " +
+                    "    n.n_dgnl, " +
+                    "    n.n_thpt, " +
+                    "    n.n_vsat, " +
+                    "    n.n_tuyenthang, " +
+                    "    COUNT(v.idnv) AS so_nv " +
+                    "FROM xt_nganh n " +
+                    "LEFT JOIN xt_nguyenvongxettuyen v " +
+                    "    ON n.manganh COLLATE utf8_unicode_ci = v.nv_manganh " +
+                    "GROUP BY n.idnganh";
 
             return session.createNativeQuery(sql).getResultList();
 
@@ -59,7 +57,8 @@ public class NganhDAO {
             tx.commit();
             return true;
         } catch (Exception e) {
-            if (tx != null) tx.rollback();
+            if (tx != null)
+                tx.rollback();
             return false;
         }
     }
@@ -72,7 +71,8 @@ public class NganhDAO {
             tx.commit();
             return true;
         } catch (Exception e) {
-            if (tx != null) tx.rollback();
+            if (tx != null)
+                tx.rollback();
             return false;
         }
     }
@@ -82,14 +82,17 @@ public class NganhDAO {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             tx = session.beginTransaction();
             NganhDTO n = session.get(NganhDTO.class, id);
-            if (n != null) session.remove(n);
+            if (n != null)
+                session.remove(n);
             tx.commit();
             return true;
         } catch (Exception e) {
-            if (tx != null) tx.rollback();
+            if (tx != null)
+                tx.rollback();
             return false;
         }
     }
+
     /**
      * Lấy ngành theo mã
      */

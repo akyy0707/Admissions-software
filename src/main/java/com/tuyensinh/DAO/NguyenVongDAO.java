@@ -63,13 +63,11 @@ public class NguyenVongDAO {
 
         try {
 
-            String sql = """
-                INSERT INTO xt_nguyenvong
-                (nn_cccd, nv_manganh, nv_tt,
-                 diem_thxt, diem_utqd, diem_cong, diem_xettuyen,
-                 nv_ketqua, nv_keys, tt_phuongthuc, tt_thm)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """;
+            String sql = "INSERT INTO xt_nguyenvong " +
+                    "(nn_cccd, nv_manganh, nv_tt, " +
+                    "diem_thxt, diem_utqd, diem_cong, diem_xettuyen, " +
+                    "nv_ketqua, nv_keys, tt_phuongthuc, tt_thm) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             PreparedStatement ps = conn.prepareStatement(sql);
 
