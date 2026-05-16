@@ -4,6 +4,7 @@ import javax.swing.UIManager;
 
 import com.formdev.flatlaf.FlatLightLaf;
 import com.tuyensinh.GUI.LoginForm;
+import com.tuyensinh.GUI.UITheme;
 
 public class Main {
 
@@ -14,6 +15,8 @@ public class Main {
             UIManager.setLookAndFeel(
                     new FlatLightLaf()
             );
+
+            UITheme.install();
 
         } catch (Exception ex) {
 
