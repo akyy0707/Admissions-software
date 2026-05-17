@@ -72,6 +72,9 @@ public class DiemThiDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     DiemThiDTO d = new DiemThiDTO();
+                    d.setIddiemthi(rs.getInt("iddiemthi"));
+                    d.setSobaodanh(rs.getString("sobaodanh"));
+                    d.setD_phuongthuc(rs.getString("d_phuongthuc"));
                     d.setCccd(rs.getString("cccd"));
                     d.setTo(rs.getDouble("TO"));
                     d.setVa(rs.getDouble("VA"));
@@ -109,6 +112,9 @@ public class DiemThiDAO {
                 ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 DiemThiDTO d = new DiemThiDTO();
+                d.setIddiemthi(rs.getInt("iddiemthi"));
+                d.setSobaodanh(rs.getString("sobaodanh"));
+                d.setD_phuongthuc(rs.getString("d_phuongthuc"));
                 d.setCccd(rs.getString("cccd"));
                 d.setTo(rs.getDouble("TO"));
                 d.setVa(rs.getDouble("VA"));

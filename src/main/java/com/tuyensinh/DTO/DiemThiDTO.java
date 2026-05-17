@@ -1,6 +1,9 @@
 package com.tuyensinh.DTO;
 
 public class DiemThiDTO {
+    private int iddiemthi;
+    private String sobaodanh;
+    private String d_phuongthuc;
     private String cccd;
     private double to, va, li, ho, si, su, di;
     private double n1_thi;
@@ -143,5 +146,29 @@ public class DiemThiDTO {
 
     public void setNk2(double nk2) {
         this.nk2 = nk2;
+    }
+
+    public int getIddiemthi() {
+        return iddiemthi;
+    }
+
+    public void setIddiemthi(int iddiemthi) {
+        this.iddiemthi = iddiemthi;
+    }
+
+    public String getSobaodanh() {
+        return sobaodanh;
+    }
+
+    public void setSobaodanh(String sobaodanh) {
+        this.sobaodanh = sobaodanh;
+    }
+
+    public String getD_phuongthuc() {
+        return d_phuongthuc;
+    }
+
+    public void setD_phuongthuc(String d_phuongthuc) {
+        this.d_phuongthuc = d_phuongthuc;
     }
 }
