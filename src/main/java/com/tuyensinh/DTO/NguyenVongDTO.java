@@ -3,23 +3,39 @@ package com.tuyensinh.DTO;
 public class NguyenVongDTO {
 
     private int idnv;
+
     private String cccd;
+
     private String maNganh;
 
     private int thuTuNV;
 
-    private Double diemTHXT;
-    private Double diemUTQD;
-    private Double diemCong;
-    private Double diemXetTuyen;
+    // Điểm tổ hợp xét tuyển
+    private double diemTHXT;
+
+    // Điểm tổ hợp gốc xét tuyển
+    private double diemTHGXT;
+
+    // Điểm ưu tiên quy đổi
+    private double diemUTQD;
+
+    // Điểm cộng
+    private double diemCong;
+
+    // Điểm xét tuyển cuối
+    private double diemXetTuyen;
 
     private String ketQua;
+
     private String keys;
 
     private String phuongThuc;
+
     private String toHopMon;
 
-    public NguyenVongDTO() {}
+    // =========================================================
+    // GETTER SETTER
+    // =========================================================
 
     public int getIdnv() {
         return idnv;
@@ -53,35 +69,43 @@ public class NguyenVongDTO {
         this.thuTuNV = thuTuNV;
     }
 
-    public Double getDiemTHXT() {
+    public double getDiemTHXT() {
         return diemTHXT;
     }
 
-    public void setDiemTHXT(Double diemTHXT) {
+    public void setDiemTHXT(double diemTHXT) {
         this.diemTHXT = diemTHXT;
     }
 
-    public Double getDiemUTQD() {
+    public double getDiemTHGXT() {
+        return diemTHGXT;
+    }
+
+    public void setDiemTHGXT(double diemTHGXT) {
+        this.diemTHGXT = diemTHGXT;
+    }
+
+    public double getDiemUTQD() {
         return diemUTQD;
     }
 
-    public void setDiemUTQD(Double diemUTQD) {
+    public void setDiemUTQD(double diemUTQD) {
         this.diemUTQD = diemUTQD;
     }
 
-    public Double getDiemCong() {
+    public double getDiemCong() {
         return diemCong;
     }
 
-    public void setDiemCong(Double diemCong) {
+    public void setDiemCong(double diemCong) {
         this.diemCong = diemCong;
     }
 
-    public Double getDiemXetTuyen() {
+    public double getDiemXetTuyen() {
         return diemXetTuyen;
     }
 
-    public void setDiemXetTuyen(Double diemXetTuyen) {
+    public void setDiemXetTuyen(double diemXetTuyen) {
         this.diemXetTuyen = diemXetTuyen;
     }
 

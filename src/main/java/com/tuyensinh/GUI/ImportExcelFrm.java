@@ -6,18 +6,18 @@ import java.awt.*;
 import java.awt.dnd.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 
-import com.tuyensinh.BUS.*;
+import com.tuyensinh.BUS.DiemThiBUS;
 
-/**
- * ImportExcelFrm - Giao diện import Excel với kéo thả (Drag & Drop)
- */
 public class ImportExcelFrm extends JPanel {
 
     private DiemThiBUS bus = new DiemThiBUS();
-    private JLabel lblDropZone;
+    private JPanel dropZonePanel;
+    private JLabel lblInstruction;
     private JLabel lblFileName;
     private JProgressBar progressBar;
     private JButton btnChooseFile;
@@ -29,102 +29,113 @@ public class ImportExcelFrm extends JPanel {
     }
 
     private void initComponents() {
-        setLayout(new BorderLayout(0, 0));
-        setBorder(new EmptyBorder(20, 20, 20, 20));
+        setLayout(new GridBagLayout()); // Căn giữa toàn bộ Form
+        setBackground(new Color(248, 249, 250)); // Nền xám sáng hiện đại
 
-        // Title
-        JLabel lblTitle = new JLabel("📥 IMPORT ĐIỂM THI TỪ EXCEL");
+        // Khởi tạo thẻ (Card) trắng bo góc
+        RoundedPanel mainCard = new RoundedPanel(25, Color.WHITE);
+        mainCard.setPreferredSize(new Dimension(650, 480));
+        mainCard.setLayout(new BoxLayout(mainCard, BoxLayout.Y_AXIS));
+        mainCard.setBorder(new EmptyBorder(35, 40, 35, 40));
+
+        // 1. Tiêu đề
+        JLabel lblTitle = new JLabel("NHẬP ĐIỂM THI TỪ EXCEL");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblTitle.setBorder(new EmptyBorder(0, 0, 20, 0));
-        add(lblTitle, BorderLayout.NORTH);
+        lblTitle.setForeground(new Color(40, 40, 40));
+        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Center - Drop Zone
-        JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
-        centerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        JLabel lblSub = new JLabel("Hỗ trợ kéo thả file (.xls, .xlsx) trực tiếp vào khu vực bên dưới");
+        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblSub.setForeground(new Color(130, 130, 130));
+        lblSub.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Drop Zone Panel
-        lblDropZone = new JLabel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                int w = getWidth();
-                int h = getHeight();
-                
-                // Draw dashed border
-                g2.setColor(new Color(100, 150, 200));
-                g2.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{10}, 0));
-                g2.drawRoundRect(10, 10, w - 20, h - 20, 20, 20);
-                
-                // Draw background
-                g2.setColor(new Color(240, 248, 255));
-                g2.fillRoundRect(11, 11, w - 22, h - 22, 20, 20);
-                
-                super.paintComponent(g);
-            }
-        };
-        lblDropZone.setLayout(new BoxLayout(lblDropZone, BoxLayout.Y_AXIS));
-        lblDropZone.setBorder(new EmptyBorder(40, 20, 40, 20));
-        lblDropZone.setPreferredSize(new Dimension(400, 250));
+        // 2. Khu vực Drop Zone (Nét đứt)
+        dropZonePanel = new DashedDropZone();
+        dropZonePanel.setLayout(new BoxLayout(dropZonePanel, BoxLayout.Y_AXIS));
+        dropZonePanel.setPreferredSize(new Dimension(500, 220));
+        dropZonePanel.setMaximumSize(new Dimension(500, 220));
+        dropZonePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        dropZonePanel.setBackground(new Color(245, 247, 250));
 
-        JLabel lblIcon = new JLabel("📁");
-        lblIcon.setFont(new Font("Segoe UI", Font.PLAIN, 80));
-        lblIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
+        dropZonePanel.add(Box.createVerticalStrut(40));
 
-        JLabel lblInstruction = new JLabel("Kéo file Excel vào đây");
-        lblInstruction.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblInstruction.setForeground(new Color(70, 130, 180));
+        lblInstruction = new JLabel("KÉO & THẢ FILE VÀO ĐÂY");
+        lblInstruction.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblInstruction.setForeground(new Color(100, 150, 200));
         lblInstruction.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        lblFileName = new JLabel("Chưa chọn file");
-        lblFileName.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblFileName.setForeground(new Color(100, 100, 100));
+        lblFileName = new JLabel("Chưa có file nào được chọn");
+        lblFileName.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblFileName.setForeground(new Color(150, 150, 150));
         lblFileName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        btnChooseFile = new JButton("Hoặc Click Để Chọn File");
-        btnChooseFile.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        btnChooseFile.setBackground(new Color(70, 130, 180));
-        btnChooseFile.setForeground(Color.WHITE);
-        btnChooseFile.setFocusPainted(false);
-        btnChooseFile.setPreferredSize(new Dimension(250, 40));
-        btnChooseFile.setMaximumSize(new Dimension(250, 40));
+        btnChooseFile = createFlatButton("Chọn File Thủ Công", new Color(41, 128, 185), new Color(52, 152, 219));
         btnChooseFile.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnChooseFile.addActionListener(e -> chooseFile());
 
-        lblDropZone.add(lblIcon);
-        lblDropZone.add(Box.createVerticalStrut(15));
-        lblDropZone.add(lblInstruction);
-        lblDropZone.add(Box.createVerticalStrut(10));
-        lblDropZone.add(lblFileName);
-        lblDropZone.add(Box.createVerticalStrut(20));
-        lblDropZone.add(btnChooseFile);
+        dropZonePanel.add(lblInstruction);
+        dropZonePanel.add(Box.createVerticalStrut(15));
+        dropZonePanel.add(lblFileName);
+        dropZonePanel.add(Box.createVerticalStrut(25));
+        dropZonePanel.add(btnChooseFile);
 
-        // Setup Drag & Drop
-        setupDragAndDrop(lblDropZone);
+        // Kích hoạt Drag & Drop
+        setupDragAndDrop(dropZonePanel);
 
-        centerPanel.add(lblDropZone, BorderLayout.CENTER);
-
-        // Progress & Status
-        JPanel bottomPanel = new JPanel(new BorderLayout(0, 10));
-        
+        // 3. Progress Bar & Status
         progressBar = new JProgressBar();
-        progressBar.setPreferredSize(new Dimension(400, 25));
+        progressBar.setPreferredSize(new Dimension(500, 8));
+        progressBar.setMaximumSize(new Dimension(500, 8));
+        progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
         progressBar.setVisible(false);
+        progressBar.setBorderPainted(false);
+        progressBar.setForeground(new Color(46, 204, 113));
+        progressBar.setBackground(new Color(235, 235, 235));
 
-        lblStatus = new JLabel(" ");
-        lblStatus.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblStatus.setForeground(new Color(100, 100, 100));
+        lblStatus = new JLabel("Trạng thái: Sẵn sàng");
+        lblStatus.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+        lblStatus.setForeground(new Color(120, 120, 120));
+        lblStatus.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        bottomPanel.add(progressBar, BorderLayout.NORTH);
-        bottomPanel.add(lblStatus, BorderLayout.CENTER);
+        // Lắp ráp Card
+        mainCard.add(lblTitle);
+        mainCard.add(Box.createVerticalStrut(8));
+        mainCard.add(lblSub);
+        mainCard.add(Box.createVerticalStrut(30));
+        mainCard.add(dropZonePanel);
+        mainCard.add(Box.createVerticalStrut(20));
+        mainCard.add(progressBar);
+        mainCard.add(Box.createVerticalStrut(10));
+        mainCard.add(lblStatus);
 
-        centerPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        add(centerPanel, BorderLayout.CENTER);
+        add(mainCard);
     }
 
-    private void setupDragAndDrop(JLabel dropZone) {
+    // ================= CUSTOM BUTTON =================
+    private JButton createFlatButton(String text, Color bgColor, Color hoverColor) {
+        JButton btn = new JButton(text);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBackground(bgColor);
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setPreferredSize(new Dimension(180, 42));
+        btn.setMaximumSize(new Dimension(180, 42));
+
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent evt) {
+                if (btn.isEnabled()) btn.setBackground(hoverColor);
+            }
+            public void mouseExited(MouseEvent evt) {
+                if (btn.isEnabled()) btn.setBackground(bgColor);
+            }
+        });
+        return btn;
+    }
+
+    // ================= DRAG & DROP LOGIC =================
+    private void setupDragAndDrop(JPanel dropZone) {
         new DropTarget(dropZone, DnDConstants.ACTION_COPY, new DropTargetAdapter() {
             @Override
             public void drop(DropTargetDropEvent dtde) {
@@ -142,18 +153,15 @@ public class ImportExcelFrm extends JPanel {
                                 handleFileSelected(file);
                             } else {
                                 JOptionPane.showMessageDialog(ImportExcelFrm.this,
-                                        "Vui lòng chọn file Excel (.xlsx hoặc .xls)",
-                                        "Lỗi",
-                                        JOptionPane.ERROR_MESSAGE);
+                                        "Vui lòng chỉ chọn định dạng file Excel (.xlsx hoặc .xls)",
+                                        "Định dạng không hợp lệ",
+                                        JOptionPane.WARNING_MESSAGE);
                             }
                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    JOptionPane.showMessageDialog(ImportExcelFrm.this,
-                            "Lỗi: " + e.getMessage(),
-                            "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(ImportExcelFrm.this, "Lỗi đọc file: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
 
@@ -164,6 +172,7 @@ public class ImportExcelFrm extends JPanel {
         }, true);
     }
 
+    // ================= CHOOSE FILE LOGIC =================
     private void chooseFile() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
@@ -171,7 +180,6 @@ public class ImportExcelFrm extends JPanel {
             public boolean accept(File f) {
                 return f.isDirectory() || f.getName().endsWith(".xlsx") || f.getName().endsWith(".xls");
             }
-
             @Override
             public String getDescription() {
                 return "Excel Files (*.xlsx, *.xls)";
@@ -187,28 +195,29 @@ public class ImportExcelFrm extends JPanel {
 
     private void handleFileSelected(File file) {
         selectedFile = file;
-        lblFileName.setText("✓ " + file.getName());
-        lblFileName.setForeground(new Color(34, 139, 34));
+        lblFileName.setText(file.getName());
+        lblFileName.setForeground(new Color(39, 174, 96)); // Chữ xanh lá khi chọn file
+        lblFileName.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-        // Ask to import
         int option = JOptionPane.showConfirmDialog(this,
-                "Bạn muốn import file: " + file.getName() + " ?",
-                "Xác nhận",
-                JOptionPane.YES_NO_OPTION);
+                "Bạn có chắc chắn muốn nạp dữ liệu từ file: " + file.getName() + " ?",
+                "Xác nhận Import",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (option == JOptionPane.YES_OPTION) {
             importFile(file);
+        } else {
+            resetUI();
         }
     }
 
+    // ================= IMPORT THREAD =================
     private void importFile(File file) {
-        // Disable controls
         btnChooseFile.setEnabled(false);
-
-        // Show progress
         progressBar.setVisible(true);
         progressBar.setIndeterminate(true);
-        lblStatus.setText("⏳ Đang import...");
+        lblStatus.setText("Trạng thái: Đang xử lý dữ liệu...");
+        lblStatus.setForeground(new Color(230, 126, 34)); // Cam cảnh báo đang xử lý
 
         new Thread(() -> {
             try {
@@ -217,25 +226,25 @@ public class ImportExcelFrm extends JPanel {
                 SwingUtilities.invokeLater(() -> {
                     progressBar.setIndeterminate(false);
                     progressBar.setValue(100);
-                    lblStatus.setText("✅ Import thành công!");
-                    
-                    JOptionPane.showMessageDialog(this,
-                            "Import thành công!\nFile: " + file.getName(),
-                            "Thành công",
-                            JOptionPane.INFORMATION_MESSAGE);
+                    lblStatus.setText("Trạng thái: Import dữ liệu thành công!");
+                    lblStatus.setForeground(new Color(39, 174, 96));
 
-                    // Reset
+                    JOptionPane.showMessageDialog(this,
+                            "Nạp điểm thi thành công!\nTệp: " + file.getName(),
+                            "Hoàn tất",
+                            JOptionPane.INFORMATION_MESSAGE);
                     resetUI();
                 });
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
                     progressBar.setVisible(false);
-                    lblStatus.setText("❌ Import thất bại: " + e.getMessage());
+                    lblStatus.setText("Trạng thái: Lỗi trong quá trình import!");
+                    lblStatus.setForeground(new Color(231, 76, 60));
                     btnChooseFile.setEnabled(true);
 
                     JOptionPane.showMessageDialog(this,
-                            "Lỗi: " + e.getMessage(),
-                            "Lỗi import",
+                            "Quá trình import thất bại!\nChi tiết: " + e.getMessage(),
+                            "Lỗi",
                             JOptionPane.ERROR_MESSAGE);
                 });
             }
@@ -244,10 +253,75 @@ public class ImportExcelFrm extends JPanel {
 
     private void resetUI() {
         btnChooseFile.setEnabled(true);
-        lblFileName.setText("Chưa chọn file");
-        lblFileName.setForeground(new Color(100, 100, 100));
+        lblFileName.setText("Chưa có file nào được chọn");
+        lblFileName.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblFileName.setForeground(new Color(150, 150, 150));
         progressBar.setVisible(false);
-        lblStatus.setText(" ");
         selectedFile = null;
+    }
+
+    // ================= CLASSES CUSTOM ĐỒ HOẠ =================
+    
+    // Class tạo thẻ bo góc trắng
+    class RoundedPanel extends JPanel {
+        private int cornerRadius;
+        private Color backgroundColor;
+
+        public RoundedPanel(int radius, Color bgColor) {
+            super();
+            this.cornerRadius = radius;
+            this.backgroundColor = bgColor;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Đổ bóng mờ nhẹ
+            g2.setColor(new Color(230, 230, 230));
+            g2.fillRoundRect(3, 3, getWidth() - 3, getHeight() - 3, cornerRadius, cornerRadius);
+            
+            // Nền trắng
+            g2.setColor(backgroundColor);
+            g2.fillRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
+            
+            // Viền nhạt
+            g2.setColor(new Color(225, 225, 225));
+            g2.drawRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
+            g2.dispose();
+        }
+    }
+
+    // Class tạo vùng Drop Zone với nét đứt
+    class DashedDropZone extends JPanel {
+        public DashedDropZone() {
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            int w = getWidth();
+            int h = getHeight();
+            int radius = 20;
+
+            // Nền xanh nhạt bên trong
+            g2.setColor(getBackground());
+            g2.fillRoundRect(2, 2, w - 5, h - 5, radius, radius);
+
+            // Nét đứt (Dashed stroke) viền ngoài
+            Stroke dashed = new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{12}, 0);
+            g2.setStroke(dashed);
+            g2.setColor(new Color(170, 190, 220)); // Xanh lơ nhạt
+            g2.drawRoundRect(2, 2, w - 5, h - 5, radius, radius);
+
+            g2.dispose();
+        }
     }
 }

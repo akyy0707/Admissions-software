@@ -1,51 +1,214 @@
 package com.tuyensinh.DAO;
 
-import com.tuyensinh.DTO.NganhToHopDTO;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import com.tuyensinh.config.HibernateUtil;
-
 import java.util.List;
 
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
+import com.tuyensinh.DTO.NganhToHopDTO;
+import com.tuyensinh.config.HibernateUtil;
+
 public class NganhToHopDAO {
+
+    // =========================================================
+    // GET ALL
+    // =========================================================
     public List<NganhToHopDTO> getAll() {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("FROM NganhToHopDTO", NganhToHopDTO.class).list();
+
+        try (
+                Session session =
+                        HibernateUtil
+                                .getSessionFactory()
+                                .openSession()
+        ) {
+
+            return session.createQuery(
+                    "FROM NganhToHopDTO",
+                    NganhToHopDTO.class
+            ).list();
+
         } catch (Exception e) {
+
             e.printStackTrace();
-            return null;
         }
+
+        return null;
     }
 
-    public boolean save(NganhToHopDTO mapping) {
-        Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            session.persist(mapping);
-            transaction.commit();
+    // =========================================================
+    // GET BY MA NGANH
+    // =========================================================
+    public List<NganhToHopDTO> getByMaNganh(String maNganh) {
+
+        try (
+                Session session =
+                        HibernateUtil
+                                .getSessionFactory()
+                                .openSession()
+        ) {
+
+            String hql = """
+                FROM NganhToHopDTO
+                WHERE maNganh = :mn
+            """;
+
+            return session.createQuery(
+                    hql,
+                    NganhToHopDTO.class
+            )
+            .setParameter("mn", maNganh)
+            .list();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    // =========================================================
+    // GET BY NGANH + TO HOP
+    // =========================================================
+    public NganhToHopDTO getByNganhAndToHop(
+            String maNganh,
+            String maToHop
+    ) {
+
+        try (
+                Session session =
+                        HibernateUtil
+                                .getSessionFactory()
+                                .openSession()
+        ) {
+
+            String hql = """
+                FROM NganhToHopDTO
+                WHERE maNganh = :mn
+                AND maToHop = :mt
+            """;
+
+            return session.createQuery(
+                            hql,
+                            NganhToHopDTO.class
+                    )
+                    .setParameter("mn", maNganh)
+                    .setParameter("mt", maToHop)
+                    .uniqueResult();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    // =========================================================
+    // SAVE
+    // =========================================================
+    public boolean save(NganhToHopDTO dto) {
+
+        Transaction tx = null;
+
+        try (
+                Session session =
+                        HibernateUtil
+                                .getSessionFactory()
+                                .openSession()
+        ) {
+
+            tx = session.beginTransaction();
+
+            session.persist(dto);
+
+            tx.commit();
+
             return true;
+
         } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
+
+            if (tx != null) {
+                tx.rollback();
+            }
+
             e.printStackTrace();
-            return false;
         }
+
+        return false;
     }
 
-    public boolean delete(int idMapping) {
-        Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            NganhToHopDTO mapping = session.get(NganhToHopDTO.class, idMapping);
-            if (mapping != null) {
-                session.remove(mapping);
-                transaction.commit();
+    // =========================================================
+    // UPDATE
+    // =========================================================
+    public boolean update(NganhToHopDTO dto) {
+
+        Transaction tx = null;
+
+        try (
+                Session session =
+                        HibernateUtil
+                                .getSessionFactory()
+                                .openSession()
+        ) {
+
+            tx = session.beginTransaction();
+
+            session.merge(dto);
+
+            tx.commit();
+
+            return true;
+
+        } catch (Exception e) {
+
+            if (tx != null) {
+                tx.rollback();
+            }
+
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    // =========================================================
+    // DELETE
+    // =========================================================
+    public boolean delete(int id) {
+
+        Transaction tx = null;
+
+        try (
+                Session session =
+                        HibernateUtil
+                                .getSessionFactory()
+                                .openSession()
+        ) {
+
+            tx = session.beginTransaction();
+
+            NganhToHopDTO dto =
+                    session.get(NganhToHopDTO.class, id);
+
+            if (dto != null) {
+
+                session.remove(dto);
+
+                tx.commit();
+
                 return true;
             }
-            return false;
+
         } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
+
+            if (tx != null) {
+                tx.rollback();
+            }
+
             e.printStackTrace();
-            return false;
         }
+
+        return false;
     }
 }
