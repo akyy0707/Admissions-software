@@ -409,25 +409,92 @@ public class ThiSinhPanel extends JPanel {
             return;
         }
 
-        String ngaySinh = ts.getNgaySinh() != null ? new SimpleDateFormat("dd/MM/yyyy").format(ts.getNgaySinh()) : "";
-        String message = String.format(
-                "THÔNG TIN CHI TIẾT\n\n" +
-                "Số báo danh:\t%s\n" +
-                "Họ tên:\t%s %s\n" +
-                "CCCD:\t%s\n" +
-                "Ngày sinh:\t%s\n" +
-                "Giới tính:\t%s\n" +
-                "Điện thoại:\t%s\n" +
-                "Email:\t%s\n" +
-                "Nơi sinh:\t%s\n" +
-                "Đối tượng:\t%s\n" +
-                "Khu vực:\t%s",
-                ts.getSoBaoDanh(), ts.getHo(), ts.getTen(), ts.getCccd(),
-                ngaySinh, ts.getGioiTinh(), ts.getDienThoai(), ts.getEmail(),
-                ts.getNoiSinh(), ts.getDoiTuong(), ts.getKhuVuc()
-        );
+        openDetailDialog(ts);
+    }
 
-        JOptionPane.showMessageDialog(this, message, "Chi Tiết Thí Sinh", JOptionPane.INFORMATION_MESSAGE);
+    private void openDetailDialog(ThiSinhDTO ts) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi Tiết Thí Sinh", true);
+        dialog.setSize(750, 580);
+        dialog.setLocationRelativeTo(this);
+        dialog.getContentPane().setBackground(Color.WHITE);
+        dialog.setLayout(new BorderLayout());
+
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(52, 152, 219));
+        headerPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
+        JLabel lblTitle = new JLabel("CHI TIẾT THÍ SINH");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTitle.setForeground(Color.WHITE);
+        JLabel lblSubtitle = new JLabel("Số báo danh: " + ts.getSoBaoDanh());
+        lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblSubtitle.setForeground(new Color(200, 230, 255));
+        
+        JPanel headerContent = new JPanel(new BorderLayout());
+        headerContent.setOpaque(false);
+        headerContent.add(lblTitle, BorderLayout.NORTH);
+        headerContent.add(lblSubtitle, BorderLayout.SOUTH);
+        headerPanel.add(headerContent, BorderLayout.WEST);
+        dialog.add(headerPanel, BorderLayout.NORTH);
+
+        // Body - Lưới thông tin
+        JPanel bodyPanel = new JPanel();
+        bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
+        bodyPanel.setBackground(Color.WHITE);
+        bodyPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
+
+        String ngaySinh = ts.getNgaySinh() != null ? new SimpleDateFormat("dd/MM/yyyy").format(ts.getNgaySinh()) : "N/A";
+
+        bodyPanel.add(createInfoRow("Họ:", ts.getHo()));
+        bodyPanel.add(createInfoRow("Tên:", ts.getTen()));
+        bodyPanel.add(createInfoRow("CCCD:", ts.getCccd()));
+        bodyPanel.add(createInfoRow("Ngày sinh:", ngaySinh));
+        bodyPanel.add(createInfoRow("Giới tính:", ts.getGioiTinh().toString()));
+        bodyPanel.add(createInfoRow("Nơi sinh:", ts.getNoiSinh() != null ? ts.getNoiSinh() : "N/A"));
+        bodyPanel.add(createInfoRow("Điện thoại:", ts.getDienThoai() != null ? ts.getDienThoai() : "N/A"));
+        bodyPanel.add(createInfoRow("Email:", ts.getEmail() != null ? ts.getEmail() : "N/A"));
+        bodyPanel.add(createInfoRow("Đối tượng:", ts.getDoiTuong() != null ? ts.getDoiTuong() : "N/A"));
+        bodyPanel.add(createInfoRow("Khu vực:", ts.getKhuVuc() != null ? ts.getKhuVuc() : "N/A"));
+
+        JScrollPane scrollPane = new JScrollPane(bodyPanel);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+
+        // Footer
+        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 15));
+        footerPanel.setBackground(Color.WHITE);
+        footerPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 220, 220)));
+
+        JButton btnClose = createFlatButton("Đóng", new Color(240, 240, 240), new Color(220, 220, 220));
+        btnClose.setForeground(new Color(80, 80, 80));
+        btnClose.addActionListener(e -> dialog.dispose());
+        footerPanel.add(btnClose);
+        dialog.add(footerPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    private JPanel createInfoRow(String label, String value) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(false);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        row.setBorder(new EmptyBorder(5, 15, 5, 15));
+        
+        JLabel lblLabel = new JLabel(label);
+        lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblLabel.setForeground(new Color(80, 80, 80));
+        lblLabel.setPreferredSize(new Dimension(120, 25));
+
+        JLabel lblValue = new JLabel(value);
+        lblValue.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblValue.setForeground(new Color(50, 50, 50));
+
+        row.add(lblLabel, BorderLayout.WEST);
+        row.add(lblValue, BorderLayout.CENTER);
+        row.setBackground(new Color(248, 249, 250));
+        
+        return row;
     }
 
     private void showDiemThiSinh() {

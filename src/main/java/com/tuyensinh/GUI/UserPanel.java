@@ -17,7 +17,14 @@ public class UserPanel extends JPanel {
     private DefaultTableModel model;
     private UserBUS userBUS = new UserBUS();
 
-    private JButton btnAdd, btnDelete, btnRefresh;
+    private JButton btnAdd, btnDelete, btnRefresh, btnEdit, btnChangePass, btnToggleStatus;
+    
+    // Phân trang
+    private int currentPage = 1;
+    private int itemsPerPage = 25;
+    private int totalUsers = 0;
+    private JLabel lblPageInfo;
+    private JButton btnPrevPage, btnNextPage;
 
     public UserPanel() {
         initComponents();
@@ -58,10 +65,16 @@ public class UserPanel extends JPanel {
 
         btnAdd = createFlatButton("Thêm mới", new Color(46, 204, 113), new Color(39, 174, 96));
         btnDelete = createFlatButton("Xóa", new Color(231, 76, 60), new Color(192, 57, 43));
+        btnEdit = createFlatButton("Sửa", new Color(52, 152, 219), new Color(41, 128, 185));
+        btnChangePass = createFlatButton("Đổi mật khẩu", new Color(155, 89, 182), new Color(142, 68, 173));
+        btnToggleStatus = createFlatButton("Bật/Tắt", new Color(241, 196, 15), new Color(230, 126, 34));
         btnRefresh = createFlatButton("Làm Mới", new Color(240, 240, 240), new Color(220, 220, 220));
         btnRefresh.setForeground(new Color(80, 80, 80));
 
         actionPanel.add(btnAdd);
+        actionPanel.add(btnEdit);
+        actionPanel.add(btnChangePass);
+        actionPanel.add(btnToggleStatus);
         actionPanel.add(btnDelete);
         actionPanel.add(btnRefresh);
 
@@ -70,7 +83,7 @@ public class UserPanel extends JPanel {
         mainPanel.add(toolBar, BorderLayout.NORTH);
 
         // ===== BẢNG DỮ LIỆU =====
-        String[] cols = {"ID", "Tên đăng nhập", "Quyền hạn"};
+        String[] cols = {"ID", "Tên đăng nhập", "Quyền hạn", "Trạng thái"};
         model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -102,8 +115,38 @@ public class UserPanel extends JPanel {
 
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
+        // ===== PHÂN TRANG =====
+        JPanel paginationPanel = new JPanel(new BorderLayout());
+        paginationPanel.setOpaque(false);
+        paginationPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
+
+        lblPageInfo = new JLabel("Trang 1");
+        lblPageInfo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblPageInfo.setForeground(new Color(100, 100, 100));
+
+        JPanel btnPaginationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        btnPaginationPanel.setOpaque(false);
+
+        btnPrevPage = createFlatButton("< Trước", new Color(200, 200, 200), new Color(180, 180, 180));
+        btnPrevPage.setForeground(new Color(80, 80, 80));
+        btnNextPage = createFlatButton("Tiếp >", new Color(200, 200, 200), new Color(180, 180, 180));
+        btnNextPage.setForeground(new Color(80, 80, 80));
+
+        btnPrevPage.addActionListener(e -> previousPage());
+        btnNextPage.addActionListener(e -> nextPage());
+
+        btnPaginationPanel.add(btnPrevPage);
+        btnPaginationPanel.add(lblPageInfo);
+        btnPaginationPanel.add(btnNextPage);
+
+        paginationPanel.add(btnPaginationPanel, BorderLayout.WEST);
+        mainPanel.add(paginationPanel, BorderLayout.SOUTH);
+
         // ===== SỰ KIỆN =====
         btnAdd.addActionListener(e -> openAddDialog());
+        btnEdit.addActionListener(e -> openEditDialog());
+        btnChangePass.addActionListener(e -> openChangePasswordDialog());
+        btnToggleStatus.addActionListener(e -> toggleUserStatus());
         btnDelete.addActionListener(e -> deleteUser());
         btnRefresh.addActionListener(e -> loadData());
 
@@ -130,17 +173,62 @@ public class UserPanel extends JPanel {
 
     // ================= LOAD DATA =================
     private void loadData() {
-        model.setRowCount(0);
-        List<UserDTO> list = userBUS.getAll();
+        loadPage(1);
+    }
 
-        if (list != null) {
-            for (UserDTO u : list) {
+    private void loadPage(int pageNumber) {
+        model.setRowCount(0);
+        totalUsers = (int) userBUS.countUsers();
+        
+        if (totalUsers == 0) {
+            lblPageInfo.setText("Không có dữ liệu");
+            btnPrevPage.setEnabled(false);
+            btnNextPage.setEnabled(false);
+            return;
+        }
+
+        int totalPages = (int) Math.ceil((double) totalUsers / itemsPerPage);
+
+        // Kiểm tra trang hợp lệ
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageNumber > totalPages) pageNumber = totalPages;
+
+        currentPage = pageNumber;
+
+        // Lấy dữ liệu từ database theo trang
+        List<UserDTO> users = userBUS.getPage(pageNumber, itemsPerPage);
+
+        // Thêm dữ liệu vào bảng
+        if (users != null && !users.isEmpty()) {
+            for (UserDTO u : users) {
+                String status = (u.getStatus() != null && u.getStatus()) ? "✓ Bật" : "✗ Tắt";
                 model.addRow(new Object[]{
                         u.getId(),
                         u.getUsername(),
-                        u.getRole()
+                        u.getRole(),
+                        status
                 });
             }
+        }
+
+        // Cập nhật nhãn phân trang
+        lblPageInfo.setText(String.format("Trang %d / %d (Tổng: %d)", currentPage, totalPages, totalUsers));
+
+        // Cập nhật trạng thái nút
+        btnPrevPage.setEnabled(currentPage > 1);
+        btnNextPage.setEnabled(currentPage < totalPages);
+    }
+
+    private void previousPage() {
+        if (currentPage > 1) {
+            loadPage(currentPage - 1);
+        }
+    }
+
+    private void nextPage() {
+        int totalPages = (int) Math.ceil((double) totalUsers / itemsPerPage);
+        if (currentPage < totalPages) {
+            loadPage(currentPage + 1);
         }
     }
 
@@ -239,7 +327,264 @@ public class UserPanel extends JPanel {
 
         dialog.setVisible(true);
     }
-    
+
+    // ================= FORM SỬA USER =================
+    private void openEditDialog() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn tài khoản cần sửa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int id = (int) model.getValueAt(row, 0);
+        UserDTO user = userBUS.getUser((String) model.getValueAt(row, 1));
+
+        if (user == null) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy tài khoản!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa Thông Tin Tài Khoản", true);
+        dialog.setSize(450, 420);
+        dialog.setLocationRelativeTo(this);
+        dialog.getContentPane().setBackground(Color.WHITE);
+        dialog.setLayout(new BorderLayout());
+
+        // Header Form
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setBorder(new EmptyBorder(20, 30, 10, 30));
+        JLabel lblFormTitle = new JLabel("CHỈNH SỬA TÀI KHOẢN");
+        lblFormTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblFormTitle.setForeground(new Color(50, 50, 50));
+        headerPanel.add(lblFormTitle, BorderLayout.WEST);
+        dialog.add(headerPanel, BorderLayout.NORTH);
+
+        // Body Form
+        JPanel formPanel = new JPanel();
+        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setBorder(new EmptyBorder(10, 30, 20, 30));
+
+        JTextField txtUsername = createStyledTextField();
+        txtUsername.setText(user.getUsername());
+        txtUsername.setEditable(false);
+
+        JPasswordField txtPassword = new JPasswordField();
+        txtPassword.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txtPassword.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(8, 10, 8, 10)
+        ));
+        txtPassword.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        txtPassword.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JComboBox<UserDTO.Role> cboRole = new JComboBox<>(UserDTO.Role.values());
+        cboRole.setSelectedItem(user.getRole());
+        cboRole.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        cboRole.setBackground(Color.WHITE);
+        cboRole.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        cboRole.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JCheckBox cbStatus = new JCheckBox("Bật kích hoạt");
+        cbStatus.setSelected(user.getStatus() != null && user.getStatus());
+        cbStatus.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cbStatus.setBackground(Color.WHITE);
+        cbStatus.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        formPanel.add(createLabeledComponent("Tên đăng nhập:"));
+        formPanel.add(txtUsername);
+        formPanel.add(Box.createVerticalStrut(15));
+        
+        formPanel.add(createLabeledComponent("Mật khẩu mới (để trống nếu không đổi):"));
+        formPanel.add(txtPassword);
+        formPanel.add(Box.createVerticalStrut(15));
+        
+        formPanel.add(createLabeledComponent("Quyền hạn:"));
+        formPanel.add(cboRole);
+        formPanel.add(Box.createVerticalStrut(15));
+        
+        formPanel.add(cbStatus);
+
+        dialog.add(formPanel, BorderLayout.CENTER);
+
+        // Footer Form
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 15));
+        btnPanel.setBackground(Color.WHITE);
+        btnPanel.setBorder(new EmptyBorder(0, 30, 20, 30));
+
+        JButton btnSave = createFlatButton("Lưu", new Color(46, 204, 113), new Color(39, 174, 96));
+        btnSave.setPreferredSize(new Dimension(120, 40));
+        JButton btnCancel = createFlatButton("Hủy bỏ", new Color(230, 230, 230), new Color(210, 210, 210));
+        btnCancel.setForeground(new Color(80, 80, 80));
+
+        btnSave.addActionListener(e -> {
+            String newPassword = new String(txtPassword.getPassword()).trim();
+            UserDTO.Role newRole = (UserDTO.Role) cboRole.getSelectedItem();
+            boolean newStatus = cbStatus.isSelected();
+
+            user.setRole(newRole);
+            user.setStatus(newStatus);
+            
+            if (!newPassword.isEmpty()) {
+                user.setPassword(newPassword);
+            }
+
+            if (userBUS.update(user)) {
+                JOptionPane.showMessageDialog(dialog, "Cập nhật thành công!", "Hoàn tất", JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+                loadData();
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        btnCancel.addActionListener(e -> dialog.dispose());
+
+        btnPanel.add(btnCancel);
+        btnPanel.add(btnSave);
+        dialog.add(btnPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    // ================= FORM ĐỔI MẬT KHẨU =================
+    private void openChangePasswordDialog() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn tài khoản!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int id = (int) model.getValueAt(row, 0);
+        String username = (String) model.getValueAt(row, 1);
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Đổi Mật Khẩu", true);
+        dialog.setSize(420, 320);
+        dialog.setLocationRelativeTo(this);
+        dialog.getContentPane().setBackground(Color.WHITE);
+        dialog.setLayout(new BorderLayout());
+
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setBorder(new EmptyBorder(20, 30, 10, 30));
+        JLabel lblFormTitle = new JLabel("ĐỔI MẬT KHẨU");
+        lblFormTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblFormTitle.setForeground(new Color(50, 50, 50));
+        headerPanel.add(lblFormTitle, BorderLayout.WEST);
+        dialog.add(headerPanel, BorderLayout.NORTH);
+
+        // Body
+        JPanel formPanel = new JPanel();
+        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setBorder(new EmptyBorder(10, 30, 20, 30));
+
+        JLabel lblUsername = new JLabel("Tài khoản: " + username);
+        lblUsername.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblUsername.setForeground(new Color(100, 100, 100));
+        lblUsername.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPasswordField txtNewPass = new JPasswordField();
+        txtNewPass.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txtNewPass.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(8, 10, 8, 10)
+        ));
+        txtNewPass.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        txtNewPass.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPasswordField txtConfirm = new JPasswordField();
+        txtConfirm.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txtConfirm.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(8, 10, 8, 10)
+        ));
+        txtConfirm.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        txtConfirm.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        formPanel.add(lblUsername);
+        formPanel.add(Box.createVerticalStrut(20));
+        
+        formPanel.add(createLabeledComponent("Mật khẩu mới:"));
+        formPanel.add(txtNewPass);
+        formPanel.add(Box.createVerticalStrut(15));
+        
+        formPanel.add(createLabeledComponent("Xác nhận mật khẩu:"));
+        formPanel.add(txtConfirm);
+
+        dialog.add(formPanel, BorderLayout.CENTER);
+
+        // Footer
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 15));
+        btnPanel.setBackground(Color.WHITE);
+        btnPanel.setBorder(new EmptyBorder(0, 30, 20, 30));
+
+        JButton btnUpdate = createFlatButton("Đổi mật khẩu", new Color(155, 89, 182), new Color(142, 68, 173));
+        btnUpdate.setPreferredSize(new Dimension(140, 40));
+        JButton btnCancel = createFlatButton("Hủy bỏ", new Color(230, 230, 230), new Color(210, 210, 210));
+        btnCancel.setForeground(new Color(80, 80, 80));
+
+        btnUpdate.addActionListener(e -> {
+            String newPass = new String(txtNewPass.getPassword()).trim();
+            String confirm = new String(txtConfirm.getPassword()).trim();
+
+            if (newPass.isEmpty() || confirm.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập đầy đủ mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (!newPass.equals(confirm)) {
+                JOptionPane.showMessageDialog(dialog, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (userBUS.changePassword(id, newPass)) {
+                JOptionPane.showMessageDialog(dialog, "Đổi mật khẩu thành công!", "Hoàn tất", JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+                loadData();
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Đổi mật khẩu thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        btnCancel.addActionListener(e -> dialog.dispose());
+
+        btnPanel.add(btnCancel);
+        btnPanel.add(btnUpdate);
+        dialog.add(btnPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    // ================= BẬT/TẮT TRẠNG THÁI =================
+    private void toggleUserStatus() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn tài khoản!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int id = (int) model.getValueAt(row, 0);
+        String username = (String) model.getValueAt(row, 1);
+        String currentStatus = (String) model.getValueAt(row, 3);
+        
+        String newStatus = currentStatus.contains("Bật") ? "Tắt" : "Bật";
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Đổi trạng thái tài khoản '" + username + "' thành '" + newStatus + "'?", 
+            "Xác nhận", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            if (userBUS.toggleStatus(id)) {
+                JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thành công!", "Hoàn tất", JOptionPane.INFORMATION_MESSAGE);
+                loadData();
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     // Hàm phụ trợ tạo Label cho Form
     private JLabel createLabeledComponent(String labelText) {
         JLabel lbl = new JLabel(labelText);

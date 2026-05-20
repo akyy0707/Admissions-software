@@ -81,11 +81,11 @@ public class MainFrame extends JFrame {
         // ----- Menu Panel -----
         JPanel menuPanel = new JPanel();
         menuPanel.setBackground(defaultMenuColor);
-        menuPanel.setLayout(new GridLayout(10, 1, 0, 8));
+        menuPanel.setLayout(new GridLayout(11, 1, 0, 8));
         menuPanel.setBorder(new EmptyBorder(25, 15, 20, 15));
 
         String[] menus = {
-                "Trang chủ", "Ngành", "Tổ hợp", "Ngành - Tổ hợp",
+                "Trang chủ", "Người dùng", "Ngành", "Tổ hợp", "Ngành - Tổ hợp",
                 "Thí sinh", "Điểm thi", "Điểm cộng", "Nguyện vọng", "Xét tuyển"
         };
 
@@ -193,6 +193,7 @@ public class MainFrame extends JFrame {
 
         // Thêm các giao diện chức năng
         mainContent.add(createHomePanel(), "Trang chủ");
+        mainContent.add(new UserPanel(), "Người dùng");
         mainContent.add(new NganhPanel(), "Ngành");
         mainContent.add(new ToHopPanel(), "Tổ hợp");
         mainContent.add(new NganhToHopPanel(), "Ngành - Tổ hợp");

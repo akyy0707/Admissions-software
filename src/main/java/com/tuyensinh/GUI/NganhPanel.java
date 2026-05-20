@@ -132,6 +132,19 @@ public class NganhPanel extends JPanel {
         });
         btnDelete.addActionListener(e -> deleteNganh());
         btnRefresh.addActionListener(e -> loadData());
+        
+        // Sự kiện tìm kiếm
+        txtSearch.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                String keyword = txtSearch.getText().trim();
+                if (keyword.isEmpty()) {
+                    loadData();
+                } else {
+                    searchNganh(keyword);
+                }
+            }
+        });
 
         toolBar.add(txtSearch);
         toolBar.add(btnAdd);
@@ -221,6 +234,31 @@ public class NganhPanel extends JPanel {
         
         List<Object[]> list = nganhBUS.getAllWithSoNV();
         if (list == null) return;
+
+        for (Object[] n : list) {
+            model.addRow(new Object[]{
+                    n[0], // id
+                    n[1], // ma nganh
+                    n[2], // ten nganh
+                    n[3], // to hop
+                    n[4], // chi tieu
+                    n[5], // diem san
+                    n[6], // diem trung tuyen
+                    formatPhuongThuc(n[7], n[8], n[9], n[10]), // Phuong thuc
+                    n[11] // so NV
+            });
+        }
+    }
+
+    // ================= SEARCH NGANH =================
+    private void searchNganh(String keyword) {
+        model.setRowCount(0);
+        
+        List<Object[]> list = nganhBUS.searchWithSoNV(keyword);
+        if (list == null || list.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy ngành nào!");
+            return;
+        }
 
         for (Object[] n : list) {
             model.addRow(new Object[]{
