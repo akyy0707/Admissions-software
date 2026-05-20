@@ -173,6 +173,10 @@ public class DiemThiDTO {
     }
 
     public double getDgnl() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return nl1;
+    }
+
+    public void setDgnl(double dgnl) {
+        this.nl1 = dgnl;
     }
 }

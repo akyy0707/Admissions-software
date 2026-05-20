@@ -153,6 +153,55 @@ public class DiemThiDAO {
     }
 
     // =========================================================
+    // GET BY CCCD + PHUONG THUC
+    // =========================================================
+    public DiemThiDTO getByCCCDAndPhuongThuc(
+            String cccd,
+            String phuongThuc
+    ) {
+
+        String key = cccd + "|" + phuongThuc;
+        if (CACHE.containsKey(key)) {
+            return CACHE.get(key);
+        }
+
+        String sql = """
+            SELECT *
+            FROM xt_diemthixettuyen
+            WHERE cccd = ?
+            AND UPPER(d_phuongthuc) = UPPER(?)
+            LIMIT 1
+        """;
+
+        try (
+                Connection conn = DB.getConn();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+
+            ps.setString(1, cccd);
+            ps.setString(2, phuongThuc);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                if (rs.next()) {
+
+                    DiemThiDTO d = map(rs);
+
+                    CACHE.put(key, d);
+
+                    return d;
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    // =========================================================
     // GET ALL
     // =========================================================
     public List<DiemThiDTO> getAll() {

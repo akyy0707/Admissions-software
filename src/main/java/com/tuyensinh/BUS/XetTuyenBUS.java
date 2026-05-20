@@ -58,6 +58,45 @@ public class XetTuyenBUS {
             int thuTuNV
     ) {
 
+        NganhDTO nganh = nganhDAO.getByMa(maNganh);
+        NganhToHopDTO toHop = nganhToHopDAO.getByNganhAndToHop(maNganh, maToHop);
+
+        DiemThiDTO diem =
+            diemDAO.getByCCCDAndPhuongThuc(
+                ts.getCccd(),
+                phuongThuc
+            );
+
+        if (diem == null) {
+            diem = diemDAO.getByCCCD(ts.getCccd());
+        }
+
+        return tinhDiemCached(
+            ts,
+            maNganh,
+            maToHop,
+            nganh,
+            toHop,
+            diem,
+            phuongThuc,
+            thuTuNV
+        );
+    }
+
+    // =========================================================
+    // TÍNH ĐIỂM (CACHE)
+    // =========================================================
+    public KetQuaXetTuyen tinhDiemCached(
+            ThiSinhDTO ts,
+            String maNganh,
+            String maToHop,
+            NganhDTO nganh,
+            NganhToHopDTO toHop,
+            DiemThiDTO diem,
+            String phuongThuc,
+            int thuTuNV
+    ) {
+
         KetQuaXetTuyen kq = new KetQuaXetTuyen();
 
         kq.cccd = ts.getCccd();
@@ -71,8 +110,6 @@ public class XetTuyenBUS {
         // =====================================================
         // LẤY NGÀNH
         // =====================================================
-        NganhDTO nganh = nganhDAO.getByMa(maNganh);
-
         if (nganh == null) {
             kq.lyDo = "Không tìm thấy ngành";
             return kq;
@@ -83,12 +120,6 @@ public class XetTuyenBUS {
         // =====================================================
         // LẤY TỔ HỢP
         // =====================================================
-        NganhToHopDTO toHop =
-                nganhToHopDAO.getByNganhAndToHop(
-                        maNganh,
-                        maToHop
-                );
-
         if (toHop == null) {
 
             kq.lyDo = "Ngành không có tổ hợp này";
@@ -99,15 +130,6 @@ public class XetTuyenBUS {
         // =====================================================
         // LẤY ĐIỂM THI
         // =====================================================
-        DiemThiDTO diem =
-                diemDAO.getByCCCD(ts.getCccd());
-        System.out.println("========== OBJECT DIEM ==========");
-System.out.println("CCCD: " + diem.getCccd());
-
-System.out.println("TO: " + diem.getTo());
-System.out.println("VA: " + diem.getVa());
-System.out.println("LI: " + diem.getLi());
-System.out.println("HO: " + diem.getHo());
         if (diem == null) {
 
             kq.lyDo = "Không có điểm thi";
@@ -121,12 +143,6 @@ System.out.println("HO: " + diem.getHo());
         double d1 = getDiemMon(diem, toHop.getThMon1());
         double d2 = getDiemMon(diem, toHop.getThMon2());
         double d3 = getDiemMon(diem, toHop.getThMon3());
-        System.out.println("==========");
-System.out.println("Tổ hợp: " + maToHop);
-
-System.out.println(toHop.getThMon1() + " = " + d1);
-System.out.println(toHop.getThMon2() + " = " + d2);
-System.out.println(toHop.getThMon3() + " = " + d3);
         double hs1 =
                 toHop.getHsMon1() == null
                         ? 1
@@ -147,24 +163,37 @@ System.out.println(toHop.getThMon3() + " = " + d3);
         // =====================================================
         // ĐIỂM THXT
         // =====================================================
-        double diemTHXT =
+        double diemTHXT;
+
+        if ("DGNL".equalsIgnoreCase(phuongThuc)) {
+            diemTHXT = getDiemDgnlQuyDoi(diem);
+        } else {
+            // THPT & V-SAT: d1,d2,d3 da o thang 10
+            diemTHXT =
                 (
-                        (d1 * hs1)
-                                + (d2 * hs2)
-                                + (d3 * hs3)
+                    (d1 * hs1)
+                        + (d2 * hs2)
+                        + (d3 * hs3)
                 )
-                        / tongHeSo
-                        * 3;
+                    / tongHeSo
+                    * 3;
+        }
 
         // =====================================================
         // QUY ĐỔI TỔ HỢP
         // =====================================================
         double doLech =
-                toHop.getDoLech() == null
-                        ? 0
-                        : toHop.getDoLech();
+            toHop.getDoLech() == null
+                ? 0
+                : toHop.getDoLech();
 
-        double diemTHGXT = diemTHXT - doLech;
+        double diemTHGXT;
+
+        if ("DGNL".equalsIgnoreCase(phuongThuc)) {
+            diemTHGXT = diemTHXT;
+        } else {
+            diemTHGXT = diemTHXT - doLech;
+        }
 
         // =====================================================
         // ĐIỂM CỘNG
@@ -249,8 +278,6 @@ System.out.println(toHop.getThMon3() + " = " + d3);
 
     mon = mon.trim().toUpperCase();
 
-    System.out.println("MON: " + mon);
-
     switch (mon) {
 
         case "TO":
@@ -301,11 +328,14 @@ System.out.println(toHop.getThMon3() + " = " + d3);
 
         default:
 
-            System.out.println("KHONG NHAN DIEN MON = " + mon);
-
             return 0;
     }
 }
+
+    private double getDiemDgnlQuyDoi(DiemThiDTO d) {
+        // TODO: ap dung quy doi bang bach phan vi neu co
+        return d.getNl1();
+    }
 // =========================================================
 // ĐIỂM CỘNG
 // =========================================================

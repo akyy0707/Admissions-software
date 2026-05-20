@@ -25,6 +25,10 @@ public class ThiSinhBUS {
         return thiSinhDAO.getPage(page, size);
     }
 
+    public List<ThiSinhDTO> getAll() {
+        return thiSinhDAO.getAll();
+    }
+
     public List<ThiSinhDTO> search(String key, int page, int size) {
         return thiSinhDAO.search(key, page, size);
     }

@@ -1,7 +1,10 @@
 package com.tuyensinh.GUI;
 
 import com.tuyensinh.BUS.NganhBUS;
+import com.tuyensinh.DAO.NguyenVongDAO;
 import com.tuyensinh.DTO.NganhDTO;
+import com.tuyensinh.DTO.NguyenVongDTO;
+import com.tuyensinh.config.DB;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -9,16 +12,22 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NguyenVongForm extends JPanel {
 
-    private NganhBUS nganhBUS = new NganhBUS();
+    private final NganhBUS nganhBUS = new NganhBUS();
     private JTable table;
     private DefaultTableModel tableModel;
     private JTextField txtSearch;
     private JButton btnSearch, btnAdd, btnEdit, btnDelete, btnRefresh;
+    private JLabel lblTong;
+    private JLabel lblTrung;
+    private JLabel lblRot;
 
     public NguyenVongForm() {
         initComponents();
@@ -89,10 +98,46 @@ public class NguyenVongForm extends JPanel {
 
         toolBar.add(searchPanel, BorderLayout.WEST);
         toolBar.add(actionPanel, BorderLayout.EAST);
-        mainPanel.add(toolBar, BorderLayout.NORTH);
+
+        JPanel statsPanel = new JPanel(new BorderLayout(0, 10));
+        statsPanel.setOpaque(false);
+
+        JPanel cardRow = new JPanel(new GridLayout(1, 3, 15, 15));
+        cardRow.setOpaque(false);
+
+        lblTong = new JLabel("0");
+        lblTrung = new JLabel("0");
+        lblRot = new JLabel("0");
+
+        cardRow.add(createStatCard("Tổng NV", lblTong, new Color(52, 152, 219)));
+        cardRow.add(createStatCard("Trúng", lblTrung, new Color(46, 204, 113)));
+        cardRow.add(createStatCard("Rớt", lblRot, new Color(231, 76, 60)));
+
+        statsPanel.add(cardRow, BorderLayout.NORTH);
+
+        JPanel topPanel = new JPanel(new BorderLayout(0, 15));
+        topPanel.setOpaque(false);
+        topPanel.add(statsPanel, BorderLayout.NORTH);
+        topPanel.add(toolBar, BorderLayout.SOUTH);
+
+        mainPanel.add(topPanel, BorderLayout.NORTH);
 
         // ===== TABLE =====
-        String[] columns = {"STT", "Số Báo Danh", "Họ Tên", "Ngành 1", "Ngành 2", "Ngành 3", "Ngành 4", "Ngành 5", "Ngành 6"};
+        String[] columns = {
+            "STT",
+            "ID",
+            "CCCD",
+            "Mã ngành",
+            "Thứ tự NV",
+            "Điểm THXT",
+            "Điểm cộng",
+            "Điểm UTQD",
+            "Điểm xét tuyển",
+            "Kết quả",
+            "NV Keys",
+            "Phương thức",
+            "Tổ hợp"
+        };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -159,43 +204,158 @@ public class NguyenVongForm extends JPanel {
 
     // ================= DATA LOGIC =================
     private void loadData() {
+        loadData(null);
+    }
+
+    private void loadData(String key) {
         tableModel.setRowCount(0);
-        List<Object[]> sampleData = getSampleData();
+
+        DataResult data = fetchData();
+        List<Object[]> rows = data.rows;
         int stt = 1;
-        for (Object[] row : sampleData) {
+
+        String searchKey =
+                key == null
+                        ? ""
+                        : key.trim().toLowerCase();
+
+        for (Object[] row : rows) {
+            String cccd = row[1] == null ? "" : row[1].toString();
+            String maNganh = row[2] == null ? "" : row[2].toString();
+
+            if (!searchKey.isEmpty()) {
+                if (!cccd.toLowerCase().contains(searchKey)
+                        && !maNganh.toLowerCase().contains(searchKey)) {
+                    continue;
+                }
+            }
+
             Object[] newRow = new Object[row.length + 1];
             newRow[0] = stt++;
             System.arraycopy(row, 0, newRow, 1, row.length);
             tableModel.addRow(newRow);
         }
+
+        updateStats(data);
     }
 
-    private List<Object[]> getSampleData() {
-        List<Object[]> list = new ArrayList<>();
-        list.add(new Object[]{"SBD001", "Nguyễn Văn A", "CNTT", "Kế toán", "Marketing", "", "", ""});
-        list.add(new Object[]{"SBD002", "Trần Thị B", "Kinh tế", "Luật", "Marketing", "", "", ""});
-        list.add(new Object[]{"SBD003", "Lê Văn C", "CNTT", "Khoa học máy tính", "An toàn thông tin", "", "", ""});
-        return list;
+    private DataResult fetchData() {
+        List<Object[]> rows = new ArrayList<>();
+        int tong = 0;
+        int trung = 0;
+        int rot = 0;
+        Map<String, Integer> theoNganh = new HashMap<>();
+        Map<String, Integer> theoPhuongThuc = new HashMap<>();
+
+        try (Connection conn = DB.getConn()) {
+            NguyenVongDAO nvDAO = new NguyenVongDAO(conn);
+            List<NguyenVongDTO> ds = nvDAO.getAll();
+
+            for (NguyenVongDTO nv : ds) {
+                tong++;
+
+                String ketQua = nv.getKetQua() == null
+                        ? ""
+                        : nv.getKetQua().trim().toUpperCase();
+
+                if ("TRUNG_TUYEN".equals(ketQua)) {
+                    trung++;
+                } else if ("ROT".equals(ketQua)) {
+                    rot++;
+                }
+
+                String maNganh = nv.getMaNganh();
+                if (maNganh == null || maNganh.isEmpty()) {
+                    maNganh = "(Trống)";
+                }
+                theoNganh.merge(maNganh, 1, Integer::sum);
+
+                String phuongThuc = nv.getPhuongThuc();
+                if (phuongThuc == null || phuongThuc.isEmpty()) {
+                    phuongThuc = "(Trống)";
+                }
+                theoPhuongThuc.merge(phuongThuc, 1, Integer::sum);
+
+                rows.add(new Object[]{
+                        nv.getIdnv(),
+                        nv.getCccd(),
+                        nv.getMaNganh(),
+                        nv.getThuTuNV(),
+                        nv.getDiemTHXT(),
+                        nv.getDiemCong(),
+                        nv.getDiemUTQD(),
+                        nv.getDiemXetTuyen(),
+                        nv.getKetQua(),
+                        nv.getKeys(),
+                        nv.getPhuongThuc(),
+                        nv.getToHopMon()
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Khong the tai du lieu nguyen vong tu DB",
+                    "Loi",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+
+        return new DataResult(rows, tong, trung, rot, theoNganh, theoPhuongThuc);
+    }
+
+    private void updateStats(DataResult data) {
+        lblTong.setText(String.valueOf(data.tong));
+        lblTrung.setText(String.valueOf(data.trung));
+        lblRot.setText(String.valueOf(data.rot));
+    }
+
+    private JPanel createStatCard(String title, JLabel value, Color color) {
+        RoundedPanel panel = new RoundedPanel(16, Color.WHITE);
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
+
+        value.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        value.setForeground(color);
+
+        panel.add(lblTitle, BorderLayout.NORTH);
+        panel.add(value, BorderLayout.CENTER);
+        return panel;
+    }
+
+
+    private static class DataResult {
+        private final List<Object[]> rows;
+        private final int tong;
+        private final int trung;
+        private final int rot;
+        private final Map<String, Integer> theoNganh;
+        private final Map<String, Integer> theoPhuongThuc;
+
+        private DataResult(
+                List<Object[]> rows,
+                int tong,
+                int trung,
+                int rot,
+                Map<String, Integer> theoNganh,
+                Map<String, Integer> theoPhuongThuc
+        ) {
+            this.rows = rows;
+            this.tong = tong;
+            this.trung = trung;
+            this.rot = rot;
+            this.theoNganh = theoNganh;
+            this.theoPhuongThuc = theoPhuongThuc;
+        }
     }
 
     private void search() {
         String key = txtSearch.getText().trim().toLowerCase();
         tableModel.setRowCount(0);
-        if (key.isEmpty()) {
-            loadData();
-        } else {
-            List<Object[]> sampleData = getSampleData();
-            int stt = 1;
-            for (Object[] row : sampleData) {
-                if (row[0].toString().toLowerCase().contains(key) ||
-                    row[1].toString().toLowerCase().contains(key)) {
-                    Object[] newRow = new Object[row.length + 1];
-                    newRow[0] = stt++;
-                    System.arraycopy(row, 0, newRow, 1, row.length);
-                    tableModel.addRow(newRow);
-                }
-            }
-        }
+        loadData(key);
     }
 
     private void delete() {
