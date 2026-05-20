@@ -159,4 +159,16 @@ public class UserDAO {
             return false;
         }
     }
+
+    public List<UserDTO> search(String keyword) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "FROM UserDTO WHERE username LIKE :kw";
+            return session.createQuery(hql, UserDTO.class)
+                    .setParameter("kw", "%" + keyword + "%")
+                    .list();
+        } catch (Exception e) {
+            System.out.println("Lỗi search: " + e.getMessage());
+            return List.of();
+        }
+    }
 }

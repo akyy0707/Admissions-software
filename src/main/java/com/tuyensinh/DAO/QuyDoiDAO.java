@@ -76,4 +76,81 @@ public class QuyDoiDAO {
             return false;
         }
     }
+   public QuyDoiDTO getKhoangQuyDoi(
+        String phuongThuc,
+        String toHop,
+        double diem
+) {
+
+    try (Session session =
+                 HibernateUtil
+                         .getSessionFactory()
+                         .openSession()) {
+
+        String hql =
+                """
+                FROM QuyDoiDTO
+                WHERE phuongThuc = :pt
+                  AND toHop = :th
+                  AND :diem BETWEEN diemA AND diemB
+                ORDER BY phanVi ASC
+                """;
+
+        return session.createQuery(
+                        hql,
+                        QuyDoiDTO.class
+                )
+                .setParameter("pt", phuongThuc)
+                .setParameter("th", toHop)
+                .setParameter("diem", diem)
+                .setMaxResults(1)
+                .uniqueResult();
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        return null;
+    }
+
+}
+public QuyDoiDTO getKhoangQuyDoiTheoMon(
+        String phuongThuc,
+        String mon,
+        double diem
+) {
+
+    try (
+            Session session =
+                    HibernateUtil
+                            .getSessionFactory()
+                            .openSession()
+    ) {
+
+        String hql =
+                """
+                FROM QuyDoiDTO
+                WHERE phuongThuc = :pt
+                  AND mon = :mon
+                  AND :diem BETWEEN diemA AND diemB
+                ORDER BY phanVi ASC
+                """;
+
+        return session.createQuery(
+                        hql,
+                        QuyDoiDTO.class
+                )
+                .setParameter("pt", phuongThuc)
+                .setParameter("mon", mon)
+                .setParameter("diem", diem)
+                .setMaxResults(1)
+                .uniqueResult();
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        return null;
+    }
+}
 }
