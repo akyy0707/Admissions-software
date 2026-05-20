@@ -583,6 +583,11 @@ private double quyDoi1Mon(
         double diem
 ) {
 
+    System.out.println("\n====================");
+    System.out.println("PHUONG THUC: " + phuongThuc);
+    System.out.println("MON: " + mon);
+    System.out.println("DIEM GOC: " + diem);
+
     QuyDoiDTO qd =
             qdDAO.getKhoangQuyDoiTheoMon(
                     phuongThuc,
@@ -591,8 +596,25 @@ private double quyDoi1Mon(
             );
 
     if (qd == null) {
+
+        System.out.println("KHONG TIM THAY QUY DOI");
+
         return 0;
     }
+
+    System.out.println(
+            "TIM THAY KHOANG: "
+            + qd.getDiemA()
+            + " -> "
+            + qd.getDiemB()
+    );
+
+    System.out.println(
+            "QUY DOI: "
+            + qd.getDiemC()
+            + " -> "
+            + qd.getDiemD()
+    );
 
     double a = qd.getDiemA();
     double b = qd.getDiemB();
@@ -607,6 +629,8 @@ private double quyDoi1Mon(
                             / (b - a)
             )
             * (dd - c);
+
+    System.out.println("DIEM SAU QUY DOI = " + y);
 
     return y;
 }
