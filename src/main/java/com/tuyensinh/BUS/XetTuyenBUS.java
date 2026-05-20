@@ -8,9 +8,11 @@ import java.util.Map;
 import com.tuyensinh.DAO.DiemThiDAO;
 import com.tuyensinh.DAO.NganhDAO;
 import com.tuyensinh.DAO.NganhToHopDAO;
+import com.tuyensinh.DAO.QuyDoiDAO;
 import com.tuyensinh.DTO.DiemThiDTO;
 import com.tuyensinh.DTO.NganhDTO;
 import com.tuyensinh.DTO.NganhToHopDTO;
+import com.tuyensinh.DTO.QuyDoiDTO;
 import com.tuyensinh.DTO.ThiSinhDTO;
 
 /**
@@ -61,25 +63,25 @@ public class XetTuyenBUS {
         NganhDTO nganh = nganhDAO.getByMa(maNganh);
         NganhToHopDTO toHop = nganhToHopDAO.getByNganhAndToHop(maNganh, maToHop);
 
-        DiemThiDTO diem =
-            diemDAO.getByCCCDAndPhuongThuc(
-                ts.getCccd(),
-                phuongThuc
-            );
+        DiemThiDTO diem
+                = diemDAO.getByCCCDAndPhuongThuc(
+                        ts.getCccd(),
+                        phuongThuc
+                );
 
         if (diem == null) {
             diem = diemDAO.getByCCCD(ts.getCccd());
         }
 
         return tinhDiemCached(
-            ts,
-            maNganh,
-            maToHop,
-            nganh,
-            toHop,
-            diem,
-            phuongThuc,
-            thuTuNV
+                ts,
+                maNganh,
+                maToHop,
+                nganh,
+                toHop,
+                diem,
+                phuongThuc,
+                thuTuNV
         );
     }
 
@@ -143,20 +145,20 @@ public class XetTuyenBUS {
         double d1 = getDiemMon(diem, toHop.getThMon1());
         double d2 = getDiemMon(diem, toHop.getThMon2());
         double d3 = getDiemMon(diem, toHop.getThMon3());
-        double hs1 =
-                toHop.getHsMon1() == null
-                        ? 1
-                        : toHop.getHsMon1();
+        double hs1
+                = toHop.getHsMon1() == null
+                ? 1
+                : toHop.getHsMon1();
 
-        double hs2 =
-                toHop.getHsMon2() == null
-                        ? 1
-                        : toHop.getHsMon2();
+        double hs2
+                = toHop.getHsMon2() == null
+                ? 1
+                : toHop.getHsMon2();
 
-        double hs3 =
-                toHop.getHsMon3() == null
-                        ? 1
-                        : toHop.getHsMon3();
+        double hs3
+                = toHop.getHsMon3() == null
+                ? 1
+                : toHop.getHsMon3();
 
         double tongHeSo = hs1 + hs2 + hs3;
 
@@ -166,15 +168,26 @@ public class XetTuyenBUS {
         double diemTHXT;
 
         if ("DGNL".equalsIgnoreCase(phuongThuc)) {
-            diemTHXT = getDiemDgnlQuyDoi(diem);
+
+            diemTHXT
+                    = getDiemDgnlQuyDoi(
+                            diem,
+                            maToHop
+                    );
+
+        } else if ("VSAT".equalsIgnoreCase(phuongThuc)) {
+
+            diemTHXT = getDiemVsatQuyDoi(
+                    diem,
+                    toHop
+            );
+
         } else {
             // THPT & V-SAT: d1,d2,d3 da o thang 10
-            diemTHXT =
-                (
-                    (d1 * hs1)
-                        + (d2 * hs2)
-                        + (d3 * hs3)
-                )
+            diemTHXT
+                    = ((d1 * hs1)
+                    + (d2 * hs2)
+                    + (d3 * hs3))
                     / tongHeSo
                     * 3;
         }
@@ -182,8 +195,8 @@ public class XetTuyenBUS {
         // =====================================================
         // QUY ĐỔI TỔ HỢP
         // =====================================================
-        double doLech =
-            toHop.getDoLech() == null
+        double doLech
+                = toHop.getDoLech() == null
                 ? 0
                 : toHop.getDoLech();
 
@@ -217,12 +230,10 @@ public class XetTuyenBUS {
 
         } else {
 
-            diemUT =
-                    (
-                            (30 - diemTHGXT - diemCong)
-                                    / 7.5
-                    )
-                            * mucUT;
+            diemUT
+                    = ((30 - diemTHGXT - diemCong)
+                    / 7.5)
+                    * mucUT;
 
             if (diemUT < 0) {
                 diemUT = 0;
@@ -232,10 +243,10 @@ public class XetTuyenBUS {
         // =====================================================
         // ĐIỂM XÉT TUYỂN
         // =====================================================
-        double diemXT =
-                diemTHGXT
-                        + diemCong
-                        + diemUT;
+        double diemXT
+                = diemTHGXT
+                + diemCong
+                + diemUT;
 
         // =====================================================
         // GÁN KẾT QUẢ
@@ -248,10 +259,10 @@ public class XetTuyenBUS {
         // =====================================================
         // SO ĐIỂM SÀN
         // =====================================================
-        double diemSan =
-                nganh.getDiemSan() == null
-                        ? 0
-                        : nganh.getDiemSan();
+        double diemSan
+                = nganh.getDiemSan() == null
+                ? 0
+                : nganh.getDiemSan();
 
         if (diemXT >= diemSan) {
 
@@ -272,84 +283,126 @@ public class XetTuyenBUS {
     // =========================================================
     private double getDiemMon(DiemThiDTO d, String mon) {
 
-    if (d == null || mon == null) {
-        return 0;
+        if (d == null || mon == null) {
+            return 0;
+        }
+
+        mon = mon.trim().toUpperCase();
+
+        switch (mon) {
+
+            case "TO":
+                return d.getTo();
+
+            case "VA":
+                return d.getVa();
+
+            case "LI":
+                return d.getLi();
+
+            case "HO":
+                return d.getHo();
+
+            case "SI":
+                return d.getSi();
+
+            case "SU":
+                return d.getSu();
+
+            case "DI":
+                return d.getDi();
+
+            case "KTPL":
+                return d.getKtpl();
+
+            case "TI":
+                return d.getTi();
+
+            case "CNCN":
+                return d.getCncn();
+
+            case "CNNN":
+                return d.getCnnn();
+
+            case "NK1":
+                return d.getNk1();
+
+            case "NK2":
+                return d.getNk2();
+
+            case "N1":
+            case "NN":
+                return Math.max(
+                        d.getN1_thi(),
+                        d.getN1_cc()
+                );
+
+            default:
+
+                return 0;
+        }
     }
 
-    mon = mon.trim().toUpperCase();
+    private double getDiemDgnlQuyDoi(
+            DiemThiDTO d,
+            String maToHop
+    ) {
 
-    switch (mon) {
+        double x = d.getNl1();
 
-        case "TO":
-            return d.getTo();
+        try {
 
-        case "VA":
-            return d.getVa();
+            QuyDoiDAO qdDAO = new QuyDoiDAO();
 
-        case "LI":
-            return d.getLi();
+            QuyDoiDTO qd
+                    = qdDAO.getKhoangQuyDoi(
+                            "DGNL",
+                            maToHop,
+                            x
+                    );
 
-        case "HO":
-            return d.getHo();
+            if (qd == null) {
+                return 0;
+            }
 
-        case "SI":
-            return d.getSi();
+            double a = qd.getDiemA();
+            double b = qd.getDiemB();
 
-        case "SU":
-            return d.getSu();
+            double c = qd.getDiemC();
+            double dd = qd.getDiemD();
 
-        case "DI":
-            return d.getDi();
+            // y = c + ((x-a)/(b-a)) * (d-c)
+            double y
+                    = c
+                    + ((x - a)
+                    / (b - a))
+                    * (dd - c);
 
-        case "KTPL":
-            return d.getKtpl();
+            return lamTron(y);
 
-        case "TI":
-            return d.getTi();
+        } catch (Exception e) {
 
-        case "CNCN":
-            return d.getCncn();
-
-        case "CNNN":
-            return d.getCnnn();
-
-        case "NK1":
-            return d.getNk1();
-
-        case "NK2":
-            return d.getNk2();
-
-        case "N1":
-        case "NN":
-            return Math.max(
-                    d.getN1_thi(),
-                    d.getN1_cc()
-            );
-
-        default:
+            e.printStackTrace();
 
             return 0;
-    }
-}
-
-    private double getDiemDgnlQuyDoi(DiemThiDTO d) {
-        // TODO: ap dung quy doi bang bach phan vi neu co
-        return d.getNl1();
+        }
     }
 // =========================================================
 // ĐIỂM CỘNG
 // =========================================================
-private double tinhDiemCong(DiemThiDTO d) {
 
-    double cong = 0;
+    private double tinhDiemCong(DiemThiDTO d) {
 
-    // IELTS / chứng chỉ ngoại ngữ
-    if (d.getN1_cc() >= 8) {
-        cong += 1.5;
+        double cong = 0;
+
+        // IELTS / chứng chỉ ngoại ngữ
+        if (d.getN1_cc() >= 8) {
+            cong += 1.5;
+        }
+
+        return cong;
     }
 
-    return cong;
-}
     // =========================================================
     // ƯU TIÊN
     // =========================================================
@@ -417,19 +470,19 @@ private double tinhDiemCong(DiemThiDTO d) {
 
         public double tiLe;
 
-        public Map<String, Integer> theoNganh =
-                new HashMap<>();
+        public Map<String, Integer> theoNganh
+                = new HashMap<>();
     }
 
     public ThongKeXetTuyen thongKe(
             List<KetQuaXetTuyen> ds
     ) {
 
-        ThongKeXetTuyen tk =
-                new ThongKeXetTuyen();
+        ThongKeXetTuyen tk
+                = new ThongKeXetTuyen();
 
-        Map<String, Boolean> daDo =
-                new HashMap<>();
+        Map<String, Boolean> daDo
+                = new HashMap<>();
 
         for (KetQuaXetTuyen kq : ds) {
 
@@ -458,17 +511,15 @@ private double tinhDiemCong(DiemThiDTO d) {
 
         if (tk.tongThiSinh > 0) {
 
-            tk.tiLe =
-                    (
-                            (double) tk.trungTuyen
-                                    / tk.tongThiSinh
-                    )
-                            * 100;
+            tk.tiLe
+                    = ((double) tk.trungTuyen
+                    / tk.tongThiSinh)
+                    * 100;
         }
 
         return tk;
     }
-     // =========================================
+    // =========================================
     // LẤY TỔ HỢP ĐIỂM CAO NHẤT
     // =========================================
 
@@ -484,5 +535,103 @@ private double tinhDiemCong(DiemThiDTO d) {
                 )
                 .orElse(null);
     }
+private double getDiemVsatQuyDoi(
+        DiemThiDTO d,
+        NganhToHopDTO toHop
+) {
 
+    try {
+
+        QuyDoiDAO qdDAO = new QuyDoiDAO();
+
+        double tong = 0;
+
+        tong += quyDoi1Mon(
+                qdDAO,
+                "VSAT",
+                toHop.getThMon1(),
+                getDiemMon(d, toHop.getThMon1())
+        );
+
+        tong += quyDoi1Mon(
+                qdDAO,
+                "VSAT",
+                toHop.getThMon2(),
+                getDiemMon(d, toHop.getThMon2())
+        );
+
+        tong += quyDoi1Mon(
+                qdDAO,
+                "VSAT",
+                toHop.getThMon3(),
+                getDiemMon(d, toHop.getThMon3())
+        );
+
+        return lamTron(tong);
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        return 0;
+    }
+}
+private double quyDoi1Mon(
+        QuyDoiDAO qdDAO,
+        String phuongThuc,
+        String mon,
+        double diem
+) {
+
+    System.out.println("\n====================");
+    System.out.println("PHUONG THUC: " + phuongThuc);
+    System.out.println("MON: " + mon);
+    System.out.println("DIEM GOC: " + diem);
+
+    QuyDoiDTO qd =
+            qdDAO.getKhoangQuyDoiTheoMon(
+                    phuongThuc,
+                    mon,
+                    diem
+            );
+
+    if (qd == null) {
+
+        System.out.println("KHONG TIM THAY QUY DOI");
+
+        return 0;
+    }
+
+    System.out.println(
+            "TIM THAY KHOANG: "
+            + qd.getDiemA()
+            + " -> "
+            + qd.getDiemB()
+    );
+
+    System.out.println(
+            "QUY DOI: "
+            + qd.getDiemC()
+            + " -> "
+            + qd.getDiemD()
+    );
+
+    double a = qd.getDiemA();
+    double b = qd.getDiemB();
+
+    double c = qd.getDiemC();
+    double dd = qd.getDiemD();
+
+    double y =
+            c
+            + (
+                    (diem - a)
+                            / (b - a)
+            )
+            * (dd - c);
+
+    System.out.println("DIEM SAU QUY DOI = " + y);
+
+    return y;
+}
 }
