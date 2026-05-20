@@ -1,5 +1,7 @@
 package com.tuyensinh.DTO;
 
+import jakarta.persistence.Column;
+
 public class DiemThiDTO {
     private int iddiemthi;
     private String sobaodanh;
@@ -79,7 +81,7 @@ public class DiemThiDTO {
     public double getN1_thi() {
         return n1_thi;
     }
-
+@Column(name = "N1_THI")
     public void setN1_thi(double n1_thi) {
         this.n1_thi = n1_thi;
     }
@@ -178,5 +180,7 @@ public class DiemThiDTO {
 
     public void setDgnl(double dgnl) {
         this.nl1 = dgnl;
+ 
     }
+    
 }

@@ -293,10 +293,7 @@ public class XetTuyenPanel extends JPanel {
                                         continue;
                                 }
 
-                                String phuongThucNV = nv.getPhuongThuc();
-                                if (phuongThucNV == null || phuongThucNV.isEmpty()) {
-                                        phuongThucNV = getPhuongThucSelected();
-                                }
+                               String phuongThucNV = getPhuongThucSelected();
 
                                 if (daTrung) {
                                         model.addRow(new Object[] {
@@ -692,10 +689,7 @@ public class XetTuyenPanel extends JPanel {
                                                 continue;
                                         }
 
-                                        String phuongThucNV = nv.getPhuongThuc();
-                                        if (phuongThucNV == null || phuongThucNV.isEmpty()) {
-                                                phuongThucNV = phuongThuc;
-                                        }
+                                        String phuongThucNV = phuongThuc;
 
                                         DiemThiDTO diem = diemByKey.get(cccd + "|" + phuongThucNV);
                                         if (diem == null) {
