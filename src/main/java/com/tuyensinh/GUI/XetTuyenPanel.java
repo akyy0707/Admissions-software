@@ -293,7 +293,7 @@ public class XetTuyenPanel extends JPanel {
                                         continue;
                                 }
 
-                               String phuongThucNV = getPhuongThucSelected();
+                                String phuongThucNV = getPhuongThucSelected();
 
                                 if (daTrung) {
                                         model.addRow(new Object[] {
@@ -604,6 +604,7 @@ public class XetTuyenPanel extends JPanel {
                 List<Object[]> rows = new ArrayList<>();
                 List<NguyenVongDTO> pendingInsert = new ArrayList<>();
                 Map<String, List<CandidateNV>> nvByCccd = new HashMap<>();
+                Map<String, List<CandidateNV>> allNVByNganh = new HashMap<>();
                 int trung = 0;
                 int rot = 0;
 
@@ -740,6 +741,8 @@ public class XetTuyenPanel extends JPanel {
                                         allNV.add(cand);
                                         nvByCccd.computeIfAbsent(cccd, k -> new ArrayList<>())
                                                         .add(cand);
+                                        allNVByNganh.computeIfAbsent(maNganh, k -> new ArrayList<>())
+                                                        .add(cand);
                                 }
                         }
 
@@ -750,11 +753,9 @@ public class XetTuyenPanel extends JPanel {
                                 NganhDTO nganh = entry.getValue();
 
                                 int chiTieu = nganh.getChiTieu();
-                                List<CandidateNV> list = new ArrayList<>();
-                                for (CandidateNV nv : allNV) {
-                                        if (maNganh.equalsIgnoreCase(nv.maNganh)) {
-                                                list.add(nv);
-                                        }
+                                List<CandidateNV> list = allNVByNganh.get(maNganh);
+                                if (list == null) {
+                                        list = new ArrayList<>();
                                 }
 
                                 if (chiTieu <= 0 || list.isEmpty()) {
@@ -914,10 +915,6 @@ public class XetTuyenPanel extends JPanel {
                                 }
                         }
 
-                        if (!nvDAO.insertBatch(pendingInsert)) {
-                                return XetTatCaResult.error("Lỗi lọc ảo sau khi lưu");
-                        }
-
                         // Cập nhật số lượng trúng tuyển theo phương thức
                         Map<String, int[]> countByNganh = new HashMap<>();
                         for (NguyenVongDTO nv : pendingInsert) {
@@ -927,8 +924,7 @@ public class XetTuyenPanel extends JPanel {
 
                                 int[] counts = countByNganh.computeIfAbsent(
                                                 nv.getMaNganh(),
-                                                k -> new int[4]
-                                );
+                                                k -> new int[4]);
 
                                 counts[0]++; // tong trung
 

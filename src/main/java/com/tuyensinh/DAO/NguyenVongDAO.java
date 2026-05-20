@@ -10,130 +10,115 @@ import com.tuyensinh.DTO.NguyenVongDTO;
 
 public class NguyenVongDAO {
 
-    private Connection conn;
+        private Connection conn;
 
-    public NguyenVongDAO(Connection conn) {
-        this.conn = conn;
-    }
-
-    // =========================================================
-    // GET ALL
-    // =========================================================
-    // =========================================================
-// GET ALL
-// =========================================================
-public List<NguyenVongDTO> getAll() {
-
-    List<NguyenVongDTO> list = new ArrayList<>();
-
-    try {
-
-                String sql = """
-                        SELECT
-                                nv.idnv,
-                                nv.nn_cccd,
-                                nv.nv_manganh,
-                                nv.nv_tt,
-
-                                nv.diem_thxt,
-                                nv.diem_cong,
-                                nv.diem_utqd,
-                                nv.diem_xettuyen,
-
-                                nv.nv_ketqua,
-                                nv.nv_keys,
-                                nv.tt_phuongthuc,
-                                nv.tt_thm
-
-                        FROM xt_nguyenvongxettuyen nv
-
-                        ORDER BY nv.idnv ASC
-                """;
-
-        PreparedStatement ps =
-                conn.prepareStatement(sql);
-
-        ResultSet rs =
-                ps.executeQuery();
-
-        while (rs.next()) {
-
-            NguyenVongDTO nv =
-                    new NguyenVongDTO();
-
-            nv.setIdnv(
-                    rs.getInt("idnv")
-            );
-
-            nv.setCccd(
-                    rs.getString("nn_cccd")
-            );
-
-            nv.setMaNganh(
-                    rs.getString("nv_manganh")
-            );
-
-            nv.setThuTuNV(
-                    rs.getInt("nv_tt")
-            );
-
-            // =========================
-            // ĐIỂM THXT
-            // =========================
-            nv.setDiemTHXT(
-                    rs.getDouble("diem_thxt")
-            );
-
-            // =========================
-            // ĐIỂM CỘNG
-            // =========================
-            nv.setDiemCong(
-                    rs.getDouble("diem_cong")
-            );
-
-            // =========================
-            // ĐIỂM ƯU TIÊN
-            // =========================
-            nv.setDiemUTQD(
-                    rs.getDouble("diem_utqd")
-            );
-
-            // =========================
-            // ĐIỂM XÉT TUYỂN
-            // =========================
-            nv.setDiemXetTuyen(
-                    rs.getDouble("diem_xettuyen")
-            );
-
-            nv.setKetQua(
-                    rs.getString("nv_ketqua")
-            );
-
-            nv.setKeys(
-                    rs.getString("nv_keys")
-            );
-
-            nv.setPhuongThuc(
-                    rs.getString("tt_phuongthuc")
-            );
-
-            nv.setToHopMon(
-                    rs.getString("tt_thm")
-            );
-
-            list.add(nv);
+        public NguyenVongDAO(Connection conn) {
+                this.conn = conn;
         }
 
-        rs.close();
-        ps.close();
+        // =========================================================
+        // GET ALL
+        // =========================================================
+        // =========================================================
+        // GET ALL
+        // =========================================================
+        public List<NguyenVongDTO> getAll() {
 
-    } catch (Exception e) {
+                List<NguyenVongDTO> list = new ArrayList<>();
 
-        e.printStackTrace();
-    }
+                try {
 
-    return list;
-}
+                        String sql = """
+                                                SELECT
+                                                        nv.idnv,
+                                                        nv.nn_cccd,
+                                                        nv.nv_manganh,
+                                                        nv.nv_tt,
+
+                                                        nv.diem_thxt,
+                                                        nv.diem_cong,
+                                                        nv.diem_utqd,
+                                                        nv.diem_xettuyen,
+
+                                                        nv.nv_ketqua,
+                                                        nv.nv_keys,
+                                                        nv.tt_phuongthuc,
+                                                        nv.tt_thm
+
+                                                FROM xt_nguyenvongxettuyen nv
+
+                                                ORDER BY nv.idnv ASC
+                                        """;
+
+                        PreparedStatement ps = conn.prepareStatement(sql);
+
+                        ResultSet rs = ps.executeQuery();
+
+                        while (rs.next()) {
+
+                                NguyenVongDTO nv = new NguyenVongDTO();
+
+                                nv.setIdnv(
+                                                rs.getInt("idnv"));
+
+                                nv.setCccd(
+                                                rs.getString("nn_cccd"));
+
+                                nv.setMaNganh(
+                                                rs.getString("nv_manganh"));
+
+                                nv.setThuTuNV(
+                                                rs.getInt("nv_tt"));
+
+                                // =========================
+                                // ĐIỂM THXT
+                                // =========================
+                                nv.setDiemTHXT(
+                                                rs.getDouble("diem_thxt"));
+
+                                // =========================
+                                // ĐIỂM CỘNG
+                                // =========================
+                                nv.setDiemCong(
+                                                rs.getDouble("diem_cong"));
+
+                                // =========================
+                                // ĐIỂM ƯU TIÊN
+                                // =========================
+                                nv.setDiemUTQD(
+                                                rs.getDouble("diem_utqd"));
+
+                                // =========================
+                                // ĐIỂM XÉT TUYỂN
+                                // =========================
+                                nv.setDiemXetTuyen(
+                                                rs.getDouble("diem_xettuyen"));
+
+                                nv.setKetQua(
+                                                rs.getString("nv_ketqua"));
+
+                                nv.setKeys(
+                                                rs.getString("nv_keys"));
+
+                                nv.setPhuongThuc(
+                                                rs.getString("tt_phuongthuc"));
+
+                                nv.setToHopMon(
+                                                rs.getString("tt_thm"));
+
+                                list.add(nv);
+                        }
+
+                        rs.close();
+                        ps.close();
+
+                } catch (Exception e) {
+
+                        e.printStackTrace();
+                }
+
+                return list;
+        }
 
         // =========================================================
         // GET CCCD DISTINCT
@@ -145,17 +130,15 @@ public List<NguyenVongDTO> getAll() {
                 try {
 
                         String sql = """
-                                SELECT DISTINCT nn_cccd
-                                FROM xt_nguyenvongxettuyen
-                                WHERE nn_cccd IS NOT NULL
-                                ORDER BY nn_cccd ASC
-                        """;
+                                                SELECT DISTINCT nn_cccd
+                                                FROM xt_nguyenvongxettuyen
+                                                WHERE nn_cccd IS NOT NULL
+                                                ORDER BY nn_cccd ASC
+                                        """;
 
-                        PreparedStatement ps =
-                                        conn.prepareStatement(sql);
+                        PreparedStatement ps = conn.prepareStatement(sql);
 
-                        ResultSet rs =
-                                        ps.executeQuery();
+                        ResultSet rs = ps.executeQuery();
 
                         while (rs.next()) {
                                 list.add(rs.getString("nn_cccd"));
@@ -182,39 +165,36 @@ public List<NguyenVongDTO> getAll() {
                 try {
 
                         String sql = """
-                                SELECT
-                                        nv.idnv,
-                                        nv.nn_cccd,
-                                        nv.nv_manganh,
-                                        nv.nv_tt,
+                                                SELECT
+                                                        nv.idnv,
+                                                        nv.nn_cccd,
+                                                        nv.nv_manganh,
+                                                        nv.nv_tt,
 
-                                        nv.diem_thxt,
-                                        nv.diem_cong,
-                                        nv.diem_utqd,
-                                        nv.diem_xettuyen,
+                                                        nv.diem_thxt,
+                                                        nv.diem_cong,
+                                                        nv.diem_utqd,
+                                                        nv.diem_xettuyen,
 
-                                        nv.nv_ketqua,
-                                        nv.nv_keys,
-                                        nv.tt_phuongthuc,
-                                        nv.tt_thm
+                                                        nv.nv_ketqua,
+                                                        nv.nv_keys,
+                                                        nv.tt_phuongthuc,
+                                                        nv.tt_thm
 
-                                FROM xt_nguyenvongxettuyen nv
-                                WHERE nv.nn_cccd = ?
-                                ORDER BY nv.nv_tt ASC
-                        """;
+                                                FROM xt_nguyenvongxettuyen nv
+                                                WHERE nv.nn_cccd = ?
+                                                ORDER BY nv.nv_tt ASC
+                                        """;
 
-                        PreparedStatement ps =
-                                        conn.prepareStatement(sql);
+                        PreparedStatement ps = conn.prepareStatement(sql);
 
                         ps.setString(1, cccd);
 
-                        ResultSet rs =
-                                        ps.executeQuery();
+                        ResultSet rs = ps.executeQuery();
 
                         while (rs.next()) {
 
-                                NguyenVongDTO nv =
-                                                new NguyenVongDTO();
+                                NguyenVongDTO nv = new NguyenVongDTO();
 
                                 nv.setIdnv(rs.getInt("idnv"));
                                 nv.setCccd(rs.getString("nn_cccd"));
@@ -242,90 +222,79 @@ public List<NguyenVongDTO> getAll() {
 
                 return list;
         }
-    // =========================================================
-    // INSERT OR UPDATE
-    // =========================================================
-    public boolean insert(NguyenVongDTO nv) {
 
-        try {
+        // =========================================================
+        // INSERT OR UPDATE
+        // =========================================================
+        public boolean insert(NguyenVongDTO nv) {
 
-            String sql = """
-                INSERT INTO xt_nguyenvongxettuyen
-                (
-                    nn_cccd,
-                    nv_manganh,
-                    nv_tt,
-                    diem_thxt,
-                    diem_utqd,
-                    diem_cong,
-                    diem_xettuyen,
-                    nv_ketqua,
-                    nv_keys,
-                    tt_phuongthuc,
-                    tt_thm
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                try {
 
-                ON DUPLICATE KEY UPDATE
+                        String sql = """
+                                            INSERT INTO xt_nguyenvongxettuyen
+                                            (
+                                                nn_cccd,
+                                                nv_manganh,
+                                                nv_tt,
+                                                diem_thxt,
+                                                diem_utqd,
+                                                diem_cong,
+                                                diem_xettuyen,
+                                                nv_ketqua,
+                                                nv_keys,
+                                                tt_phuongthuc,
+                                                tt_thm
+                                            )
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
-                    diem_thxt = VALUES(diem_thxt),
-                    diem_utqd = VALUES(diem_utqd),
-                    diem_cong = VALUES(diem_cong),
-                    diem_xettuyen = VALUES(diem_xettuyen),
-                    nv_ketqua = VALUES(nv_ketqua),
-                    tt_phuongthuc = VALUES(tt_phuongthuc),
-                    tt_thm = VALUES(tt_thm)
-            """;
+                                            ON DUPLICATE KEY UPDATE
 
-            PreparedStatement ps =
-                    conn.prepareStatement(sql);
+                                                diem_thxt = VALUES(diem_thxt),
+                                                diem_utqd = VALUES(diem_utqd),
+                                                diem_cong = VALUES(diem_cong),
+                                                diem_xettuyen = VALUES(diem_xettuyen),
+                                                nv_ketqua = VALUES(nv_ketqua),
+                                                tt_phuongthuc = VALUES(tt_phuongthuc),
+                                                tt_thm = VALUES(tt_thm)
+                                        """;
 
-            ps.setString(1, nv.getCccd());
+                        PreparedStatement ps = conn.prepareStatement(sql);
 
-            ps.setString(2, nv.getMaNganh());
+                        ps.setString(1, nv.getCccd());
 
-            ps.setInt(3, nv.getThuTuNV());
+                        ps.setString(2, nv.getMaNganh());
 
-            ps.setDouble(4, nv.getDiemTHXT());
+                        ps.setInt(3, nv.getThuTuNV());
 
-            ps.setDouble(5, nv.getDiemUTQD());
+                        ps.setDouble(4, nv.getDiemTHXT());
 
-            ps.setDouble(6, nv.getDiemCong());
+                        ps.setDouble(5, nv.getDiemUTQD());
 
-            ps.setDouble(7, nv.getDiemXetTuyen());
+                        ps.setDouble(6, nv.getDiemCong());
 
-            ps.setString(8, nv.getKetQua());
+                        ps.setDouble(7, nv.getDiemXetTuyen());
 
-            ps.setString(9, nv.getKeys());
+                        ps.setString(8, nv.getKetQua());
 
-            ps.setString(10, nv.getPhuongThuc());
+                        ps.setString(9, nv.getKeys());
 
-            ps.setString(11, nv.getToHopMon());
+                        ps.setString(10, nv.getPhuongThuc());
 
-            // DEBUG
-            System.out.println("========== SAVE NV ==========");
-            System.out.println("CCCD: " + nv.getCccd());
-            System.out.println("Ngành: " + nv.getMaNganh());
-            System.out.println("THXT: " + nv.getDiemTHXT());
-            System.out.println("UTQD: " + nv.getDiemUTQD());
-            System.out.println("Cộng: " + nv.getDiemCong());
-            System.out.println("XT: " + nv.getDiemXetTuyen());
-            System.out.println("=============================");
+                        ps.setString(11, nv.getToHopMon());
 
-            boolean ok =
-                    ps.executeUpdate() > 0;
+                        boolean ok = ps.executeUpdate() > 0;
 
-            ps.close();
+                        ps.close();
 
-            return ok;
+                        return ok;
 
-        } catch (Exception e) {
+                } catch (Exception e) {
 
-            e.printStackTrace();
+                        e.printStackTrace();
+                }
+
+                return false;
         }
-
-        return false;
-    }
 
         // =========================================================
         // INSERT BATCH
@@ -341,32 +310,32 @@ public List<NguyenVongDTO> getAll() {
                 try {
 
                         String sql = """
-                                INSERT INTO xt_nguyenvongxettuyen
-                                (
-                                        nn_cccd,
-                                        nv_manganh,
-                                        nv_tt,
-                                        diem_thxt,
-                                        diem_utqd,
-                                        diem_cong,
-                                        diem_xettuyen,
-                                        nv_ketqua,
-                                        nv_keys,
-                                        tt_phuongthuc,
-                                        tt_thm
-                                )
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                                INSERT INTO xt_nguyenvongxettuyen
+                                                (
+                                                        nn_cccd,
+                                                        nv_manganh,
+                                                        nv_tt,
+                                                        diem_thxt,
+                                                        diem_utqd,
+                                                        diem_cong,
+                                                        diem_xettuyen,
+                                                        nv_ketqua,
+                                                        nv_keys,
+                                                        tt_phuongthuc,
+                                                        tt_thm
+                                                )
+                                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
-                                ON DUPLICATE KEY UPDATE
+                                                ON DUPLICATE KEY UPDATE
 
-                                        diem_thxt = VALUES(diem_thxt),
-                                        diem_utqd = VALUES(diem_utqd),
-                                        diem_cong = VALUES(diem_cong),
-                                        diem_xettuyen = VALUES(diem_xettuyen),
-                                        nv_ketqua = VALUES(nv_ketqua),
-                                        tt_phuongthuc = VALUES(tt_phuongthuc),
-                                        tt_thm = VALUES(tt_thm)
-                        """;
+                                                        diem_thxt = VALUES(diem_thxt),
+                                                        diem_utqd = VALUES(diem_utqd),
+                                                        diem_cong = VALUES(diem_cong),
+                                                        diem_xettuyen = VALUES(diem_xettuyen),
+                                                        nv_ketqua = VALUES(nv_ketqua),
+                                                        tt_phuongthuc = VALUES(tt_phuongthuc),
+                                                        tt_thm = VALUES(tt_thm)
+                                        """;
 
                         autoCommit = conn.getAutoCommit();
                         if (autoCommit) {
@@ -425,36 +394,33 @@ public List<NguyenVongDTO> getAll() {
                 return false;
         }
 
-    // =========================================================
-    // DELETE
-    // =========================================================
-    public boolean delete(int id) {
+        // =========================================================
+        // DELETE
+        // =========================================================
+        public boolean delete(int id) {
 
-        try {
+                try {
 
-            String sql =
-                    """
-                    DELETE FROM xt_nguyenvongxettuyen
-                    WHERE idnv = ?
-                    """;
+                        String sql = """
+                                        DELETE FROM xt_nguyenvongxettuyen
+                                        WHERE idnv = ?
+                                        """;
 
-            PreparedStatement ps =
-                    conn.prepareStatement(sql);
+                        PreparedStatement ps = conn.prepareStatement(sql);
 
-            ps.setInt(1, id);
+                        ps.setInt(1, id);
 
-            boolean ok =
-                    ps.executeUpdate() > 0;
+                        boolean ok = ps.executeUpdate() > 0;
 
-            ps.close();
+                        ps.close();
 
-            return ok;
+                        return ok;
 
-        } catch (Exception e) {
+                } catch (Exception e) {
 
-            e.printStackTrace();
+                        e.printStackTrace();
+                }
+
+                return false;
         }
-
-        return false;
-    }
 }

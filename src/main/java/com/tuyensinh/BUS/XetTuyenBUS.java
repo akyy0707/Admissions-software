@@ -1,5 +1,6 @@
 package com.tuyensinh.BUS;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,105 @@ public class XetTuyenBUS {
     private final NganhDAO nganhDAO = new NganhDAO();
     private final NganhToHopDAO nganhToHopDAO = new NganhToHopDAO();
     private final DiemCongBUS diemCongBUS = new DiemCongBUS();
+    private final QuyDoiDAO quyDoiDAO = new QuyDoiDAO();
+    private final Map<String, List<QuyDoiDTO>> quyDoiByPtToHop = new HashMap<>();
+    private final Map<String, List<QuyDoiDTO>> quyDoiByPtMon = new HashMap<>();
+
+    public XetTuyenBUS() {
+        loadQuyDoiCache();
+    }
+
+    private void loadQuyDoiCache() {
+        List<QuyDoiDTO> all = quyDoiDAO.getAll();
+        if (all == null) {
+            return;
+        }
+
+        for (QuyDoiDTO qd : all) {
+            String pt = qd.getPhuongThuc();
+            if (pt == null) {
+                continue;
+            }
+
+            String toHopKey = normalizeKey(pt) + "|" + normalizeKey(qd.getToHop());
+            quyDoiByPtToHop.computeIfAbsent(toHopKey, k -> new ArrayList<>()).add(qd);
+
+            String monKey = normalizeKey(pt) + "|" + normalizeKey(qd.getMon());
+            quyDoiByPtMon.computeIfAbsent(monKey, k -> new ArrayList<>()).add(qd);
+        }
+
+        quyDoiByPtToHop.values().forEach(list -> list.sort(Comparator.comparingDouble(
+                q -> q.getDiemA() == null ? Double.MIN_VALUE : q.getDiemA())));
+        quyDoiByPtMon.values().forEach(list -> list.sort(Comparator.comparingDouble(
+                q -> q.getDiemA() == null ? Double.MIN_VALUE : q.getDiemA())));
+    }
+
+    private String normalizeKey(String value) {
+        return value == null ? "" : value.trim().toUpperCase();
+    }
+
+    private QuyDoiDTO findQuyDoiByToHop(String phuongThuc, String toHop, double diem) {
+        if (phuongThuc == null || toHop == null) {
+            return null;
+        }
+
+        List<QuyDoiDTO> list = quyDoiByPtToHop.get(normalizeKey(phuongThuc) + "|" + normalizeKey(toHop));
+        if (list == null) {
+            return null;
+        }
+
+        for (QuyDoiDTO qd : list) {
+            Double a = qd.getDiemA();
+            Double b = qd.getDiemB();
+            if (a != null && b != null && diem >= a && diem <= b) {
+                return qd;
+            }
+        }
+
+        return null;
+    }
+
+    private QuyDoiDTO findQuyDoiByMon(String phuongThuc, String mon, double diem) {
+        if (phuongThuc == null || mon == null) {
+            return null;
+        }
+
+        List<QuyDoiDTO> list = quyDoiByPtMon.get(normalizeKey(phuongThuc) + "|" + normalizeKey(mon));
+        if (list == null) {
+            return null;
+        }
+
+        for (QuyDoiDTO qd : list) {
+            Double a = qd.getDiemA();
+            Double b = qd.getDiemB();
+            if (a != null && b != null && diem >= a && diem <= b) {
+                return qd;
+            }
+        }
+
+        return null;
+    }
+
+    private double convertQuyDoi(QuyDoiDTO qd, double diem) {
+        if (qd == null
+                || qd.getDiemA() == null
+                || qd.getDiemB() == null
+                || qd.getDiemC() == null
+                || qd.getDiemD() == null) {
+            return 0;
+        }
+
+        double a = qd.getDiemA();
+        double b = qd.getDiemB();
+        double c = qd.getDiemC();
+        double d = qd.getDiemD();
+
+        if (b == a) {
+            return lamTron(c);
+        }
+
+        return lamTron(c + ((diem - a) / (b - a)) * (d - c));
+    }
 
     // =========================================================
     // DTO KẾT QUẢ
@@ -332,40 +432,8 @@ public class XetTuyenBUS {
             String maToHop) {
 
         double x = d.getNl1();
-
-        try {
-
-            QuyDoiDAO qdDAO = new QuyDoiDAO();
-
-            QuyDoiDTO qd = qdDAO.getKhoangQuyDoi(
-                    "DGNL",
-                    maToHop,
-                    x);
-
-            if (qd == null) {
-                return 0;
-            }
-
-            double a = qd.getDiemA();
-            double b = qd.getDiemB();
-
-            double c = qd.getDiemC();
-            double dd = qd.getDiemD();
-
-            // y = c + ((x-a)/(b-a)) * (d-c)
-            double y = c
-                    + ((x - a)
-                            / (b - a))
-                            * (dd - c);
-
-            return lamTron(y);
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return 0;
-        }
+        QuyDoiDTO qd = findQuyDoiByToHop("DGNL", maToHop, x);
+        return convertQuyDoi(qd, x);
     }
     // =========================================================
     // ĐIỂM CỘNG
@@ -526,88 +594,32 @@ public class XetTuyenBUS {
             DiemThiDTO d,
             NganhToHopDTO toHop) {
 
-        try {
+        double tong = 0;
 
-            QuyDoiDAO qdDAO = new QuyDoiDAO();
+        tong += quyDoi1Mon(
+                "VSAT",
+                toHop.getThMon1(),
+                getDiemMon(d, toHop.getThMon1()));
 
-            double tong = 0;
+        tong += quyDoi1Mon(
+                "VSAT",
+                toHop.getThMon2(),
+                getDiemMon(d, toHop.getThMon2()));
 
-            tong += quyDoi1Mon(
-                    qdDAO,
-                    "VSAT",
-                    toHop.getThMon1(),
-                    getDiemMon(d, toHop.getThMon1()));
+        tong += quyDoi1Mon(
+                "VSAT",
+                toHop.getThMon3(),
+                getDiemMon(d, toHop.getThMon3()));
 
-            tong += quyDoi1Mon(
-                    qdDAO,
-                    "VSAT",
-                    toHop.getThMon2(),
-                    getDiemMon(d, toHop.getThMon2()));
-
-            tong += quyDoi1Mon(
-                    qdDAO,
-                    "VSAT",
-                    toHop.getThMon3(),
-                    getDiemMon(d, toHop.getThMon3()));
-
-            return lamTron(tong);
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return 0;
-        }
+        return lamTron(tong);
     }
 
     private double quyDoi1Mon(
-            QuyDoiDAO qdDAO,
             String phuongThuc,
             String mon,
             double diem) {
 
-        System.out.println("\n====================");
-        System.out.println("PHUONG THUC: " + phuongThuc);
-        System.out.println("MON: " + mon);
-        System.out.println("DIEM GOC: " + diem);
-
-        QuyDoiDTO qd = qdDAO.getKhoangQuyDoiTheoMon(
-                phuongThuc,
-                mon,
-                diem);
-
-        if (qd == null) {
-
-            System.out.println("KHONG TIM THAY QUY DOI");
-
-            return 0;
-        }
-
-        System.out.println(
-                "TIM THAY KHOANG: "
-                        + qd.getDiemA()
-                        + " -> "
-                        + qd.getDiemB());
-
-        System.out.println(
-                "QUY DOI: "
-                        + qd.getDiemC()
-                        + " -> "
-                        + qd.getDiemD());
-
-        double a = qd.getDiemA();
-        double b = qd.getDiemB();
-
-        double c = qd.getDiemC();
-        double dd = qd.getDiemD();
-
-        double y = c
-                + ((diem - a)
-                        / (b - a))
-                        * (dd - c);
-
-        System.out.println("DIEM SAU QUY DOI = " + y);
-
-        return y;
+        QuyDoiDTO qd = findQuyDoiByMon(phuongThuc, mon, diem);
+        return convertQuyDoi(qd, diem);
     }
 }
