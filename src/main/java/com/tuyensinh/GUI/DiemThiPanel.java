@@ -66,8 +66,8 @@ public class DiemThiPanel extends JPanel {
         panel.setOpaque(false);
 
         panel.add(createStatCard("Tổng Thí Sinh Có Điểm", lblTongThiSinh, new Color(41, 128, 185))); // Xanh dương
-        panel.add(createStatCard("Điểm Trung Bình Toán", lblAvgToan, new Color(39, 174, 96)));    // Xanh lá
-        panel.add(createStatCard("Điểm Trung Bình Văn", lblAvgVan, new Color(142, 68, 173)));     // Tím
+        panel.add(createStatCard("Điểm Trung Bình Toán", lblAvgToan, new Color(39, 174, 96))); // Xanh lá
+        panel.add(createStatCard("Điểm Trung Bình Văn", lblAvgVan, new Color(142, 68, 173))); // Tím
 
         return panel;
     }
@@ -123,10 +123,11 @@ public class DiemThiPanel extends JPanel {
 
         // ===== TABLE =====
         String[] columns = {
-                "CCCD", "Toán", "Văn", "Lý", "Hóa", "Sinh", 
-                "Sử", "Địa", "KTPL", "Tin", "NK1", "NK2"
+                "ID", "CCCD", "Số báo danh", "Phương thức",
+                "Toán", "Lý", "Hóa", "Sinh", "Sử", "Địa", "Văn",
+                "N1_THI", "N1_CC", "CNCN", "CNNN", "Tin", "KTPL", "NL1", "NK1", "NK2"
         };
-        
+
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -175,6 +176,7 @@ public class DiemThiPanel extends JPanel {
             public void mouseEntered(MouseEvent evt) {
                 btn.setBackground(hoverColor);
             }
+
             public void mouseExited(MouseEvent evt) {
                 btn.setBackground(bgColor);
             }
@@ -192,10 +194,12 @@ public class DiemThiPanel extends JPanel {
             File file = chooser.getSelectedFile();
             try {
                 diemThiBUS.importFromExcel(file);
-                JOptionPane.showMessageDialog(this, "Import dữ liệu từ Excel thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Import dữ liệu từ Excel thành công!", "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
                 loadDataFromDB();
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Import thất bại! Vui lòng kiểm tra lại định dạng file.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Import thất bại! Vui lòng kiểm tra lại định dạng file.", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
             }
         }
@@ -214,9 +218,10 @@ public class DiemThiPanel extends JPanel {
                 tongToan += d.getTo();
                 tongVan += d.getVa();
 
-                model.addRow(new Object[]{
-                        d.getCccd(), d.getTo(), d.getVa(), d.getLi(), d.getHo(),
-                        d.getSi(), d.getSu(), d.getDi(), d.getKtpl(), d.getTi(),
+                model.addRow(new Object[] {
+                        d.getIddiemthi(), d.getCccd(), d.getSobaodanh(), d.getD_phuongthuc(),
+                        d.getTo(), d.getLi(), d.getHo(), d.getSi(), d.getSu(), d.getDi(), d.getVa(),
+                        d.getN1_thi(), d.getN1_cc(), d.getCncn(), d.getCnnn(), d.getTi(), d.getKtpl(), d.getNl1(),
                         d.getNk1(), d.getNk2()
                 });
             }
@@ -235,7 +240,8 @@ public class DiemThiPanel extends JPanel {
 
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Không thể tải dữ liệu từ cơ sở dữ liệu!", "Lỗi kết nối", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không thể tải dữ liệu từ cơ sở dữ liệu!", "Lỗi kết nối",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -256,19 +262,19 @@ public class DiemThiPanel extends JPanel {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
+
             // Đổ bóng mờ nhẹ
             g2.setColor(new Color(230, 230, 230));
             g2.fillRoundRect(3, 3, getWidth() - 3, getHeight() - 3, cornerRadius, cornerRadius);
-            
+
             // Vẽ màu nền
             g2.setColor(backgroundColor);
             g2.fillRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
-            
+
             // Vẽ viền thanh mảnh
             g2.setColor(new Color(225, 225, 225));
             g2.drawRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
-            
+
             g2.dispose();
         }
     }

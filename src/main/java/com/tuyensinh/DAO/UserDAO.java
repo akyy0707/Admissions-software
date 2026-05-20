@@ -34,6 +34,29 @@ public class UserDAO {
         }
     }
 
+    public List<UserDTO> getPage(int page, int size) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM UserDTO", UserDTO.class)
+                    .setFirstResult((page - 1) * size)
+                    .setMaxResults(size)
+                    .list();
+        } catch (Exception e) {
+            System.out.println("Lỗi getPage: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    public long count() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Long result = session.createQuery(
+                    "SELECT COUNT(u.id) FROM UserDTO u", Long.class).uniqueResult();
+            return result != null ? result : 0;
+        } catch (Exception e) {
+            System.out.println("Lỗi count: " + e.getMessage());
+            return 0;
+        }
+    }
+
     public UserDTO getByUsername(String username) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 
@@ -49,6 +72,15 @@ public class UserDAO {
         }
     }
 
+    public UserDTO getById(int id) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.get(UserDTO.class, id);
+        } catch (Exception e) {
+            System.out.println("Lỗi getById: " + e.getMessage());
+            return null;
+        }
+    }
+
     public UserDTO login(String username, String password) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 
@@ -59,11 +91,21 @@ public class UserDAO {
                     .setParameter("password", password)
                     .uniqueResult();
 
-            if (user != null && user.getPassword().equals(password)) {
-                return user;
+            if (user == null || !user.getPassword().equals(password)) {
+                return null;
             }
 
-            return null;
+            if (user.getRole() != UserDTO.Role.ADMIN) {
+                System.out.println("Chỉ ADMIN mới có thể đăng nhập!");
+                return null;
+            }
+
+            if (user.getStatus() == null || !user.getStatus()) {
+                System.out.println("Tài khoản đã bị vô hiệu hóa!");
+                return null;
+            }
+
+            return user;
 
         } catch (Exception e) {
             System.out.println("Login lỗi: " + e.getMessage());
@@ -115,6 +157,18 @@ public class UserDAO {
                 tx.rollback();
             System.out.println("Delete User lỗi: " + e.getMessage());
             return false;
+        }
+    }
+
+    public List<UserDTO> search(String keyword) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "FROM UserDTO WHERE username LIKE :kw";
+            return session.createQuery(hql, UserDTO.class)
+                    .setParameter("kw", "%" + keyword + "%")
+                    .list();
+        } catch (Exception e) {
+            System.out.println("Lỗi search: " + e.getMessage());
+            return List.of();
         }
     }
 }

@@ -106,4 +106,36 @@ public class NganhDAO {
             return null;
         }
     }
+
+    // ====== SEARCH WITH SỐ NV ======
+    public List<Object[]> searchWithSoNV(String keyword) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String sql = "SELECT " +
+                    "    n.idnganh, " +
+                    "    n.manganh, " +
+                    "    n.tennganh, " +
+                    "    n.n_tohopgoc, " +
+                    "    n.n_chitieu, " +
+                    "    n.n_diemsan, " +
+                    "    n.n_diemtrungtuyen, " +
+                    "    n.n_dgnl, " +
+                    "    n.n_thpt, " +
+                    "    n.n_vsat, " +
+                    "    n.n_tuyenthang, " +
+                    "    COUNT(v.idnv) AS so_nv " +
+                    "FROM xt_nganh n " +
+                    "LEFT JOIN xt_nguyenvongxettuyen v " +
+                    "    ON n.manganh COLLATE utf8_unicode_ci = v.nv_manganh " +
+                    "WHERE LOWER(n.manganh) LIKE :key OR LOWER(n.tennganh) LIKE :key " +
+                    "GROUP BY n.idnganh";
+
+            return session.createNativeQuery(sql)
+                    .setParameter("key", "%" + keyword.toLowerCase() + "%")
+                    .getResultList();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
 }

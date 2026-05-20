@@ -46,6 +46,19 @@ public class ThiSinhDAO {
         }
     }
 
+    public List<ThiSinhDTO> getAll() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+            String hql = "SELECT t FROM ThiSinhDTO t LEFT JOIN FETCH t.user";
+
+            return session.createQuery(hql, ThiSinhDTO.class).list();
+
+        } catch (Exception e) {
+            System.out.println("Lỗi getAll: " + e.getMessage());
+            return List.of();
+        }
+    }
+
     public List<ThiSinhDTO> search(String key, int page, int size) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 

@@ -148,4 +148,8 @@ public class NganhBUS {
     public List<Object[]> getAllWithSoNV() {
         return nganhDAO.getAllWithSoNV();
     }
+
+    public List<Object[]> searchWithSoNV(String keyword) {
+        return nganhDAO.searchWithSoNV(keyword);
+    }
 }

@@ -81,11 +81,11 @@ public class MainFrame extends JFrame {
         // ----- Menu Panel -----
         JPanel menuPanel = new JPanel();
         menuPanel.setBackground(defaultMenuColor);
-        menuPanel.setLayout(new GridLayout(10, 1, 0, 8));
+        menuPanel.setLayout(new GridLayout(11, 1, 0, 8));
         menuPanel.setBorder(new EmptyBorder(25, 15, 20, 15));
 
         String[] menus = {
-                "Trang chủ", "Ngành", "Tổ hợp", "Ngành - Tổ hợp",
+                "Trang chủ", "Người dùng", "Ngành", "Tổ hợp", "Ngành - Tổ hợp",
                 "Thí sinh", "Điểm thi", "Điểm cộng", "Nguyện vọng", "Xét tuyển"
         };
 
@@ -193,6 +193,7 @@ public class MainFrame extends JFrame {
 
         // Thêm các giao diện chức năng
         mainContent.add(createHomePanel(), "Trang chủ");
+        mainContent.add(new UserPanel(), "Người dùng");
         mainContent.add(new NganhPanel(), "Ngành");
         mainContent.add(new ToHopPanel(), "Tổ hợp");
         mainContent.add(new NganhToHopPanel(), "Ngành - Tổ hợp");
@@ -284,6 +285,8 @@ public class MainFrame extends JFrame {
     // ================= LOAD DATA BACKGROUND =================
     private void loadDashboardDataAsync() {
         SwingWorker<int[], Void> worker = new SwingWorker<int[], Void>() {
+            private Throwable loadError;
+
             @Override
             protected int[] doInBackground() throws Exception {
                 int[] results = new int[3];
@@ -298,13 +301,13 @@ public class MainFrame extends JFrame {
                     ResultSet rs2 = ps2.executeQuery();
                     if (rs2.next()) results[1] = rs2.getInt(1);
 
-                    PreparedStatement ps3 = conn.prepareStatement("SELECT COUNT(*) FROM xt_diemthixettuyen");
+                    PreparedStatement ps3 = conn.prepareStatement("SELECT COUNT(*) FROM xt_nguyenvongxettuyen");
                     ResultSet rs3 = ps3.executeQuery();
                     if (rs3.next()) results[2] = rs3.getInt(1);
 
                     conn.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (Throwable t) {
+                    loadError = t;
                 }
                 return results;
             }
@@ -313,13 +316,21 @@ public class MainFrame extends JFrame {
             protected void done() {
                 try {
                     int[] results = get();
+                    if (loadError != null) {
+                        loadError.printStackTrace();
+                        lblTongThiSinh.setText("0");
+                        lblTongNganh.setText("0");
+                        lblHoSoXetTuyen.setText("0");
+                        return;
+                    }
                     lblTongThiSinh.setText(String.format("%,d", results[0]));
                     lblTongNganh.setText(String.format("%,d", results[1]));
                     lblHoSoXetTuyen.setText(String.format("%,d", results[2]));
                 } catch (Exception e) {
-                    lblTongThiSinh.setText("Lỗi");
-                    lblTongNganh.setText("Lỗi");
-                    lblHoSoXetTuyen.setText("Lỗi");
+                    e.printStackTrace();
+                    lblTongThiSinh.setText("0");
+                    lblTongNganh.setText("0");
+                    lblHoSoXetTuyen.setText("0");
                 }
             }
         };

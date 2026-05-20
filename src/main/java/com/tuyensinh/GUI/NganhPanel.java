@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.util.List;
+import java.awt.FontMetrics;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -102,8 +103,29 @@ public class NganhPanel extends JPanel {
         // ===== TOOLBAR =====
         JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         toolBar.setOpaque(false);
+        
+        txtSearch = new JTextField() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                // Nếu ô nhập liệu trống, tiến hành vẽ chữ mờ
+                if (getText().isEmpty()) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(150, 150, 150)); // Màu chữ mờ (Xám)
+                    g2.setFont(getFont().deriveFont(Font.ITALIC)); // Chữ mờ in nghiêng
+                    
+                    // Căn giữa chữ theo chiều dọc
+                    FontMetrics fm = g2.getFontMetrics();
+                    int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                    
+                    // Vẽ chữ mờ cách lề trái 12px (do bạn đã set EmptyBorder left = 10)
+                    g2.drawString("Tìm kiếm theo tên ngành...", 12, y);
+                    g2.dispose();
+                }
+            }
+        };
 
-        txtSearch = new JTextField();
         txtSearch.setPreferredSize(new Dimension(250, 38));
         txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtSearch.setBorder(BorderFactory.createCompoundBorder(
@@ -132,6 +154,19 @@ public class NganhPanel extends JPanel {
         });
         btnDelete.addActionListener(e -> deleteNganh());
         btnRefresh.addActionListener(e -> loadData());
+        
+        // Sự kiện tìm kiếm
+        txtSearch.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                String keyword = txtSearch.getText().trim();
+                if (keyword.isEmpty()) {
+                    loadData();
+                } else {
+                    searchNganh(keyword);
+                }
+            }
+        });
 
         toolBar.add(txtSearch);
         toolBar.add(btnAdd);
@@ -221,6 +256,31 @@ public class NganhPanel extends JPanel {
         
         List<Object[]> list = nganhBUS.getAllWithSoNV();
         if (list == null) return;
+
+        for (Object[] n : list) {
+            model.addRow(new Object[]{
+                    n[0], // id
+                    n[1], // ma nganh
+                    n[2], // ten nganh
+                    n[3], // to hop
+                    n[4], // chi tieu
+                    n[5], // diem san
+                    n[6], // diem trung tuyen
+                    formatPhuongThuc(n[7], n[8], n[9], n[10]), // Phuong thuc
+                    n[11] // so NV
+            });
+        }
+    }
+
+    // ================= SEARCH NGANH =================
+    private void searchNganh(String keyword) {
+        model.setRowCount(0);
+        
+        List<Object[]> list = nganhBUS.searchWithSoNV(keyword);
+        if (list == null || list.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy ngành nào!");
+            return;
+        }
 
         for (Object[] n : list) {
             model.addRow(new Object[]{

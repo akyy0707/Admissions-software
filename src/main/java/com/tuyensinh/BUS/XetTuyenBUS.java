@@ -1,7 +1,6 @@
 package com.tuyensinh.BUS;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,241 +8,481 @@ import java.util.Map;
 import com.tuyensinh.DAO.DiemThiDAO;
 import com.tuyensinh.DAO.NganhDAO;
 import com.tuyensinh.DAO.NganhToHopDAO;
-import com.tuyensinh.DAO.QuyDoiDAO;
-import com.tuyensinh.DAO.ToHopDAO;
 import com.tuyensinh.DTO.DiemThiDTO;
 import com.tuyensinh.DTO.NganhDTO;
-import com.tuyensinh.DTO.QuyDoiDTO;
+import com.tuyensinh.DTO.NganhToHopDTO;
 import com.tuyensinh.DTO.ThiSinhDTO;
-import com.tuyensinh.DTO.ToHopDTO;
 
 /**
- * XetTuyenBUS - Business Logic cho xét tuyển
- * Tính điểm xét tuyển và so sánh chọn ngành trúng tuyển
+ * XetTuyenBUS - Business xét tuyển chuẩn 2025
  */
 public class XetTuyenBUS {
 
-    private DiemThiDAO diemDAO = new DiemThiDAO();
-    private NganhDAO nganhDAO = new NganhDAO();
-    private NganhToHopDAO nganhToHopDAO = new NganhToHopDAO();
-    private ToHopDAO toHopDAO = new ToHopDAO();
-    private QuyDoiDAO quyDoiDAO = new QuyDoiDAO();
+    private final DiemThiDAO diemDAO = new DiemThiDAO();
+    private final NganhDAO nganhDAO = new NganhDAO();
+    private final NganhToHopDAO nganhToHopDAO = new NganhToHopDAO();
 
-    /**
-     * Kết quả xét tuyển cho một thí sinh
-     */
+    // =========================================================
+    // DTO KẾT QUẢ
+    // =========================================================
     public static class KetQuaXetTuyen {
-        public String soBaoDanh;
-        public String hoTen;
+
         public String cccd;
-        public double diemXetTuyen;
+        public String hoTen;
+
         public String maNganh;
         public String tenNganh;
-        public boolean trungTuyen;
+
+        public String toHop;
+        public String phuongThuc;
+
         public int thuTuNguyenVong;
+
+        public double diemTHXT;
+        public double diemCong;
+        public double diemUT;
+        public double diemXetTuyen;
+
+        public boolean trungTuyen;
         public String lyDo;
-
-        public KetQuaXetTuyen(String soBaoDanh, String hoTen, String cccd) {
-            this.soBaoDanh = soBaoDanh;
-            this.hoTen = hoTen;
-            this.cccd = cccd;
-        }
     }
 
-    /**
-     * Tính điểm xét tuyển theo tổ hợp
-     * @param cccd CCCD của thí sinh
-     * @param maToHop Mã tổ hợp (A00, A01, C00, D01...)
-     * @return Điểm xét tuyển hoặc -1 nếu không hợp lệ
-     */
-    public double tinhDiemXetTuyen(String cccd, String maToHop) {
-        DiemThiDTO diem = diemDAO.getByCCCD(cccd);
+    // =========================================================
+    // TÍNH ĐIỂM XÉT TUYỂN
+    // =========================================================
+    public KetQuaXetTuyen tinhDiem(
+            ThiSinhDTO ts,
+            String maNganh,
+            String maToHop,
+            String phuongThuc,
+            int thuTuNV
+    ) {
+
+        NganhDTO nganh = nganhDAO.getByMa(maNganh);
+        NganhToHopDTO toHop = nganhToHopDAO.getByNganhAndToHop(maNganh, maToHop);
+
+        DiemThiDTO diem =
+            diemDAO.getByCCCDAndPhuongThuc(
+                ts.getCccd(),
+                phuongThuc
+            );
+
         if (diem == null) {
-            return -1;
+            diem = diemDAO.getByCCCD(ts.getCccd());
         }
 
-        ToHopDTO toHop = toHopDAO.getByMa(maToHop);
+        return tinhDiemCached(
+            ts,
+            maNganh,
+            maToHop,
+            nganh,
+            toHop,
+            diem,
+            phuongThuc,
+            thuTuNV
+        );
+    }
+
+    // =========================================================
+    // TÍNH ĐIỂM (CACHE)
+    // =========================================================
+    public KetQuaXetTuyen tinhDiemCached(
+            ThiSinhDTO ts,
+            String maNganh,
+            String maToHop,
+            NganhDTO nganh,
+            NganhToHopDTO toHop,
+            DiemThiDTO diem,
+            String phuongThuc,
+            int thuTuNV
+    ) {
+
+        KetQuaXetTuyen kq = new KetQuaXetTuyen();
+
+        kq.cccd = ts.getCccd();
+        kq.hoTen = ts.getHo() + " " + ts.getTen();
+
+        kq.maNganh = maNganh;
+        kq.toHop = maToHop;
+        kq.phuongThuc = phuongThuc;
+        kq.thuTuNguyenVong = thuTuNV;
+
+        // =====================================================
+        // LẤY NGÀNH
+        // =====================================================
+        if (nganh == null) {
+            kq.lyDo = "Không tìm thấy ngành";
+            return kq;
+        }
+
+        kq.tenNganh = nganh.getTenNganh();
+
+        // =====================================================
+        // LẤY TỔ HỢP
+        // =====================================================
         if (toHop == null) {
-            return -1;
+
+            kq.lyDo = "Ngành không có tổ hợp này";
+
+            return kq;
         }
 
-        // Lấy hệ số từ bảng quy đổi
-        double hs1 = getHeSo(toHop.getMon1());
-        double hs2 = getHeSo(toHop.getMon2());
-        double hs3 = getHeSo(toHop.getMon3());
+        // =====================================================
+        // LẤY ĐIỂM THI
+        // =====================================================
+        if (diem == null) {
 
-        // Lấy điểm các môn
-        double m1 = getDiemMon(diem, toHop.getMon1());
-        double m2 = getDiemMon(diem, toHop.getMon2());
-        double m3 = getDiemMon(diem, toHop.getMon3());
+            kq.lyDo = "Không có điểm thi";
 
-        // Tính điểm với hệ số
-        return m1 * hs1 + m2 * hs2 + m3 * hs3;
-    }
+            return kq;
+        }
 
-    private double getHeSo(String maMon) {
-        // Mặc định hệ số 1.0 cho tất cả môn
-        // Có thể mở rộng sau bằng cách đọc từ bảng quy đổi
-        QuyDoiDTO qd = quyDoiDAO.getByMaMon(maMon);
-        if (qd != null) {
-            // Tính hệ số quy đổi theo công thức
-            // Giả định: hệ số = điểm A / điểm quy đổi
-            if (qd.getDiemA() != null && qd.getDiemA() > 0) {
-                return 30.0 / qd.getDiemA(); // Quy đổi về thang 30
+        // =====================================================
+        // TÍNH ĐIỂM 3 MÔN
+        // =====================================================
+        double d1 = getDiemMon(diem, toHop.getThMon1());
+        double d2 = getDiemMon(diem, toHop.getThMon2());
+        double d3 = getDiemMon(diem, toHop.getThMon3());
+        double hs1 =
+                toHop.getHsMon1() == null
+                        ? 1
+                        : toHop.getHsMon1();
+
+        double hs2 =
+                toHop.getHsMon2() == null
+                        ? 1
+                        : toHop.getHsMon2();
+
+        double hs3 =
+                toHop.getHsMon3() == null
+                        ? 1
+                        : toHop.getHsMon3();
+
+        double tongHeSo = hs1 + hs2 + hs3;
+
+        // =====================================================
+        // ĐIỂM THXT
+        // =====================================================
+        double diemTHXT;
+
+        if ("DGNL".equalsIgnoreCase(phuongThuc)) {
+            diemTHXT = getDiemDgnlQuyDoi(diem);
+        } else {
+            // THPT & V-SAT: d1,d2,d3 da o thang 10
+            diemTHXT =
+                (
+                    (d1 * hs1)
+                        + (d2 * hs2)
+                        + (d3 * hs3)
+                )
+                    / tongHeSo
+                    * 3;
+        }
+
+        // =====================================================
+        // QUY ĐỔI TỔ HỢP
+        // =====================================================
+        double doLech =
+            toHop.getDoLech() == null
+                ? 0
+                : toHop.getDoLech();
+
+        double diemTHGXT;
+
+        if ("DGNL".equalsIgnoreCase(phuongThuc)) {
+            diemTHGXT = diemTHXT;
+        } else {
+            diemTHGXT = diemTHXT - doLech;
+        }
+
+        // =====================================================
+        // ĐIỂM CỘNG
+        // =====================================================
+        double diemCong = tinhDiemCong(diem);
+
+        if (diemCong > 3) {
+            diemCong = 3;
+        }
+
+        // =====================================================
+        // ĐIỂM ƯU TIÊN
+        // =====================================================
+        double mucUT = tinhMucUuTien(ts);
+
+        double diemUT;
+
+        if ((diemTHGXT + diemCong) < 22.5) {
+
+            diemUT = mucUT;
+
+        } else {
+
+            diemUT =
+                    (
+                            (30 - diemTHGXT - diemCong)
+                                    / 7.5
+                    )
+                            * mucUT;
+
+            if (diemUT < 0) {
+                diemUT = 0;
             }
         }
-        return 1.0;
-    }
 
-    private double getDiemMon(DiemThiDTO diem, String maMon) {
-        if (maMon == null) return 0;
-        switch (maMon.toUpperCase()) {
-            case "TO": return diem.getTo();
-            case "VA": return diem.getVa();
-            case "LI": return diem.getLi();
-            case "HO": return diem.getHo();
-            case "SI": return diem.getSi();
-            case "SU": return diem.getSu();
-            case "DI": return diem.getDi();
-            case "NN": return diem.getN1_thi();
-            case "KTPL": return diem.getKtpl();
-            case "TI": return diem.getTi();
-            default: return 0;
-        }
-    }
+        // =====================================================
+        // ĐIỂM XÉT TUYỂN
+        // =====================================================
+        double diemXT =
+                diemTHGXT
+                        + diemCong
+                        + diemUT;
 
-    /**
-     * Xét tuyển cho một thí sinh với nhiều nguyện vọng
-     * @param cccd CCCD của thí sinh
-     * @param dsNguyenVong Danh sách mã ngành theo thứ tự ưu tiên
-     * @return Danh sách kết quả xét tuyển
-     */
-    public List<KetQuaXetTuyen> xetTuyen(String cccd, List<String> dsNguyenVong) {
-        List<KetQuaXetTuyen> ketQuaList = new ArrayList<>();
-        
-        ThiSinhDTO ts = new ThiSinhDTO();
-        ts.setCccd(cccd);
-        
-        // Lấy thông tin thí sinh (giả định)
-        String soBaoDanh = "SBD_" + cccd;
-        String hoTen = "Thí sinh " + cccd;
+        // =====================================================
+        // GÁN KẾT QUẢ
+        // =====================================================
+        kq.diemTHXT = lamTron(diemTHGXT);
+        kq.diemCong = lamTron(diemCong);
+        kq.diemUT = lamTron(diemUT);
+        kq.diemXetTuyen = lamTron(diemXT);
 
-        for (int i = 0; i < dsNguyenVong.size(); i++) {
-            String maNganh = dsNguyenVong.get(i);
-            NganhDTO nganh = nganhDAO.getByMa(maNganh);
-            
-            if (nganh == null) continue;
+        // =====================================================
+        // SO ĐIỂM SÀN
+        // =====================================================
+        double diemSan =
+                nganh.getDiemSan() == null
+                        ? 0
+                        : nganh.getDiemSan();
 
-            KetQuaXetTuyen kq = new KetQuaXetTuyen(soBaoDanh, hoTen, cccd);
-            kq.maNganh = maNganh;
-            kq.tenNganh = nganh.getTenNganh();
-            kq.thuTuNguyenVong = i + 1;
+        if (diemXT >= diemSan) {
 
-            // Lấy tổ hợp gốc của ngành
-            String toHopGoc = nganh.getToHopGoc();
-            if (toHopGoc == null || toHopGoc.isEmpty()) {
-                kq.lyDo = "Ngành chưa có tổ hợp";
-                kq.trungTuyen = false;
-                ketQuaList.add(kq);
-                continue;
-            }
+            kq.trungTuyen = true;
+            kq.lyDo = "Đủ điều kiện";
 
-            // Tính điểm xét tuyển
-            double diemXT = tinhDiemXetTuyen(cccd, toHopGoc);
-            kq.diemXetTuyen = diemXT;
+        } else {
 
-            // So sánh với điểm sàn
-            Double diemSan = nganh.getDiemSan();
-            if (diemSan == null) diemSan = 0.0;
-            
-            if (diemXT >= diemSan) {
-                kq.trungTuyen = true;
-                kq.lyDo = "Đạt điểm sàn";
-            } else {
-                kq.trungTuyen = false;
-                kq.lyDo = String.format("Không đạt điểm sàn (%.2f < %.2f)", diemXT, diemSan);
-            }
-
-            ketQuaList.add(kq);
+            kq.trungTuyen = false;
+            kq.lyDo = "Không đạt điểm sàn";
         }
 
-        return ketQuaList;
+        return kq;
     }
 
-    /**
-     * Xét tuyển đợt - xét tất cả thí sinh
-     * @return Map với key là CCCD, value là danh sách kết quả
-     */
-    public Map<String, List<KetQuaXetTuyen>> xetTuyenDoi() {
-        Map<String, List<KetQuaXetTuyen>> ketQuaMap = new HashMap<>();
-        
-        // Lấy danh sách tất cả thí sinh có điểm
-        List<DiemThiDTO> dsDiem = diemDAO.getAll();
-        
-        for (DiemThiDTO diem : dsDiem) {
-            // Giả định mỗi thí sinh có 6 nguyện vọng
-            List<String> dsNV = Arrays.asList("CNTT", "KETOAN", "MARKETING", "LUAT", "KINHTE", "TAICHINH");
-            List<KetQuaXetTuyen> kq = xetTuyen(diem.getCccd(), dsNV);
-            ketQuaMap.put(diem.getCccd(), kq);
+    // =========================================================
+    // LẤY ĐIỂM MÔN
+    // =========================================================
+    private double getDiemMon(DiemThiDTO d, String mon) {
+
+    if (d == null || mon == null) {
+        return 0;
+    }
+
+    mon = mon.trim().toUpperCase();
+
+    switch (mon) {
+
+        case "TO":
+            return d.getTo();
+
+        case "VA":
+            return d.getVa();
+
+        case "LI":
+            return d.getLi();
+
+        case "HO":
+            return d.getHo();
+
+        case "SI":
+            return d.getSi();
+
+        case "SU":
+            return d.getSu();
+
+        case "DI":
+            return d.getDi();
+
+        case "KTPL":
+            return d.getKtpl();
+
+        case "TI":
+            return d.getTi();
+
+        case "CNCN":
+            return d.getCncn();
+
+        case "CNNN":
+            return d.getCnnn();
+
+        case "NK1":
+            return d.getNk1();
+
+        case "NK2":
+            return d.getNk2();
+
+        case "N1":
+        case "NN":
+            return Math.max(
+                    d.getN1_thi(),
+                    d.getN1_cc()
+            );
+
+        default:
+
+            return 0;
+    }
+}
+
+    private double getDiemDgnlQuyDoi(DiemThiDTO d) {
+        // TODO: ap dung quy doi bang bach phan vi neu co
+        return d.getNl1();
+    }
+// =========================================================
+// ĐIỂM CỘNG
+// =========================================================
+private double tinhDiemCong(DiemThiDTO d) {
+
+    double cong = 0;
+
+    // IELTS / chứng chỉ ngoại ngữ
+    if (d.getN1_cc() >= 8) {
+        cong += 1.5;
+    }
+
+    return cong;
+}
+    // =========================================================
+    // ƯU TIÊN
+    // =========================================================
+    private double tinhMucUuTien(ThiSinhDTO ts) {
+
+        double ut = 0;
+
+        if ("KV1".equalsIgnoreCase(ts.getKhuVuc())) {
+            ut += 0.75;
+        } else if ("KV2NT".equalsIgnoreCase(ts.getKhuVuc())) {
+            ut += 0.5;
+        } else if ("KV2".equalsIgnoreCase(ts.getKhuVuc())) {
+            ut += 0.25;
         }
-        
-        return ketQuaMap;
+
+        if ("01".equals(ts.getDoiTuong())) {
+            ut += 2;
+        } else if ("02".equals(ts.getDoiTuong())) {
+            ut += 1;
+        }
+
+        return ut;
     }
 
-    /**
-     * Lấy danh sách ngành trúng tuyển cao nhất cho mỗi thí sinh
-     * @param cccd CCCD thí sinh
-     * @return Ngành trúng tuyển cao nhất hoặc null
-     */
-    public KetQuaXetTuyen getNguyenVongTrungTuyenCaoNhat(String cccd, List<String> dsNguyenVong) {
-        List<KetQuaXetTuyen> ketQuaList = xetTuyen(cccd, dsNguyenVong);
-        
-        for (KetQuaXetTuyen kq : ketQuaList) {
+    // =========================================================
+    // LÀM TRÒN
+    // =========================================================
+    private double lamTron(double d) {
+
+        return Math.round(d * 100.0) / 100.0;
+    }
+
+    // =========================================================
+    // XÉT TUYỂN CAO NHẤT
+    // =========================================================
+    public KetQuaXetTuyen getNguyenVongTrungTuyenCaoNhat(
+            ThiSinhDTO ts,
+            List<KetQuaXetTuyen> ds
+    ) {
+
+        ds.sort(
+                Comparator.comparingInt(
+                        o -> o.thuTuNguyenVong
+                )
+        );
+
+        for (KetQuaXetTuyen kq : ds) {
+
             if (kq.trungTuyen) {
                 return kq;
             }
         }
+
         return null;
     }
 
-    /**
-     * Thống kê xét tuyển
-     */
+    // =========================================================
+    // THỐNG KÊ
+    // =========================================================
     public static class ThongKeXetTuyen {
-        public int tongSoThiSinh;
-        public int soTrungTuyen;
-        public int soKhongTrungTuyen;
-        public double tiLeTrungTuyen;
-        public Map<String, Integer> thongKeTheoNganh;
+
+        public int tongThiSinh;
+        public int trungTuyen;
+        public int rot;
+
+        public double tiLe;
+
+        public Map<String, Integer> theoNganh =
+                new HashMap<>();
     }
 
-    public ThongKeXetTuyen thongKe() {
-        ThongKeXetTuyen tk = new ThongKeXetTuyen();
-        tk.thongKeTheoNganh = new HashMap<>();
-        
-        Map<String, List<KetQuaXetTuyen>> ketQuaMap = xetTuyenDoi();
-        tk.tongSoThiSinh = ketQuaMap.size();
-        
-        for (List<KetQuaXetTuyen> list : ketQuaMap.values()) {
-            boolean daTrungTuyen = false;
-            for (KetQuaXetTuyen kq : list) {
-                if (kq.trungTuyen && !daTrungTuyen) {
-                    tk.soTrungTuyen++;
-                    daTrungTuyen = true;
-                    
-                    // Thống kê theo ngành
-                    tk.thongKeTheoNganh.merge(kq.maNganh, 1, Integer::sum);
-                }
+    public ThongKeXetTuyen thongKe(
+            List<KetQuaXetTuyen> ds
+    ) {
+
+        ThongKeXetTuyen tk =
+                new ThongKeXetTuyen();
+
+        Map<String, Boolean> daDo =
+                new HashMap<>();
+
+        for (KetQuaXetTuyen kq : ds) {
+
+            if (!daDo.containsKey(kq.cccd)) {
+
+                tk.tongThiSinh++;
+
+                daDo.put(kq.cccd, true);
             }
-            if (!daTrungTuyen) {
-                tk.soKhongTrungTuyen++;
+
+            if (kq.trungTuyen) {
+
+                tk.trungTuyen++;
+
+                tk.theoNganh.merge(
+                        kq.maNganh,
+                        1,
+                        Integer::sum
+                );
+
+            } else {
+
+                tk.rot++;
             }
         }
-        
-        tk.tiLeTrungTuyen = tk.tongSoThiSinh > 0 
-            ? (double) tk.soTrungTuyen / tk.tongSoThiSinh * 100 
-            : 0;
-        
+
+        if (tk.tongThiSinh > 0) {
+
+            tk.tiLe =
+                    (
+                            (double) tk.trungTuyen
+                                    / tk.tongThiSinh
+                    )
+                            * 100;
+        }
+
         return tk;
     }
+     // =========================================
+    // LẤY TỔ HỢP ĐIỂM CAO NHẤT
+    // =========================================
+
+    public KetQuaXetTuyen getToHopCaoNhat(
+            List<KetQuaXetTuyen> ds
+    ) {
+
+        return ds.stream()
+                .max(
+                        Comparator.comparingDouble(
+                                o -> o.diemXetTuyen
+                        )
+                )
+                .orElse(null);
+    }
+
 }
