@@ -622,4 +622,62 @@ public class XetTuyenBUS {
         QuyDoiDTO qd = findQuyDoiByMon(phuongThuc, mon, diem);
         return convertQuyDoi(qd, diem);
     }
+
+    public KetQuaXetTuyen xetTuyenCaoNhat(
+            ThiSinhDTO ts,
+            String maNganh,
+            int thuTuNV,
+            NganhDTO nganh,
+            List<NganhToHopDTO> dsToHop,
+            Map<String, DiemThiDTO> diemByPT) {
+
+        String[] dsPhuongThuc = {
+                "THPT",
+                "DGNL",
+                "VSAT"
+        };
+
+        KetQuaXetTuyen best = null;
+
+        for (String pt : dsPhuongThuc) {
+
+            DiemThiDTO diem = diemByPT.get(pt);
+
+            if (diem == null) {
+                continue;
+            }
+
+            for (NganhToHopDTO th : dsToHop) {
+
+                try {
+
+                    KetQuaXetTuyen kq = tinhDiemCached(
+                            ts,
+                            maNganh,
+                            th.getMaToHop(),
+                            nganh,
+                            th,
+                            diem,
+                            pt,
+                            thuTuNV);
+
+                    if (kq == null) {
+                        continue;
+                    }
+
+                    if (best == null
+                            || kq.diemXetTuyen > best.diemXetTuyen) {
+
+                        best = kq;
+                    }
+
+                } catch (Exception e) {
+
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return best;
+    }
 }

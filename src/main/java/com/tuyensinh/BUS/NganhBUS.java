@@ -152,4 +152,22 @@ public class NganhBUS {
     public List<Object[]> searchWithSoNV(String keyword) {
         return nganhDAO.searchWithSoNV(keyword);
     }
+
+    public NganhDTO getByMaNganh(String maNganh) {
+
+        List<NganhDTO> ds = getAll();
+
+        if (ds == null) {
+            return null;
+        }
+
+        for (NganhDTO n : ds) {
+
+            if (maNganh.equals(n.getMaNganh())) {
+                return n;
+            }
+        }
+
+        return null;
+    }
 }

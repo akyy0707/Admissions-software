@@ -63,6 +63,7 @@ public class XetTuyenPanel extends JPanel {
         private final DiemThiBUS diemThiBUS;
         private final ThiSinhBUS thiSinhBUS;
         private final NganhToHopDAO nganhToHopDAO;
+        private Map<String, Map<String, DiemThiDTO>> diemByCccdAndPT;
 
         public XetTuyenPanel() {
 
@@ -151,7 +152,7 @@ public class XetTuyenPanel extends JPanel {
                                 new Dimension(220, 38));
 
                 cboPhuongThuc = new javax.swing.JComboBox<>(
-                                new String[] { "THPT", "DGNL", "VSAT" });
+                                new String[] { "THPT", "DGNL", "VSAT", "AUTO" });
 
                 cboPhuongThuc.setPreferredSize(
                                 new Dimension(120, 38));
@@ -183,6 +184,7 @@ public class XetTuyenPanel extends JPanel {
                                 "STT",
                                 "CCCD",
                                 "Ngành",
+                                "Phương thức",
                                 "Tổ hợp",
                                 "Điểm THXT",
                                 "Điểm cộng",
@@ -294,12 +296,14 @@ public class XetTuyenPanel extends JPanel {
                                 }
 
                                 String phuongThucNV = getPhuongThucSelected();
+                                boolean auto = "AUTO".equalsIgnoreCase(phuongThucNV);
 
                                 if (daTrung) {
                                         model.addRow(new Object[] {
                                                         stt++,
                                                         ts.getCccd(),
                                                         maNganh,
+                                                        "",
                                                         nv.getToHopMon(),
                                                         0,
                                                         0,
@@ -325,21 +329,51 @@ public class XetTuyenPanel extends JPanel {
                                         continue;
                                 }
 
-                                List<XetTuyenBUS.KetQuaXetTuyen> ketQuaNganh = new ArrayList<>();
+                                XetTuyenBUS.KetQuaXetTuyen best;
 
-                                for (NganhToHopDTO th : dsToHopNganh) {
-                                        XetTuyenBUS.KetQuaXetTuyen kq = xetTuyenBUS.tinhDiem(
+                                if (auto) {
+                                        Map<String, DiemThiDTO> diemByPT = new HashMap<>();
+
+                                        List<DiemThiDTO> diemList = diemThiBUS.getAll();
+
+                                        for (DiemThiDTO d : diemList) {
+
+                                                if (cccd.equals(d.getCccd())) {
+
+                                                        diemByPT.put(
+                                                                        d.getD_phuongthuc(),
+                                                                        d);
+                                                }
+                                        }
+                                        NganhDTO nganh = nganhBUS.getByMaNganh(maNganh);
+
+                                        best = xetTuyenBUS.xetTuyenCaoNhat(
                                                         ts,
                                                         maNganh,
-                                                        th.getMaToHop(),
-                                                        phuongThucNV,
-                                                        nv.getThuTuNV());
+                                                        nv.getThuTuNV(),
+                                                        nganh,
+                                                        dsToHopNganh,
+                                                        diemByPT);
 
-                                        ketQuaNganh.add(kq);
+                                } else {
+
+                                        List<XetTuyenBUS.KetQuaXetTuyen> ketQuaNganh = new ArrayList<>();
+
+                                        for (NganhToHopDTO th : dsToHopNganh) {
+
+                                                XetTuyenBUS.KetQuaXetTuyen kq = xetTuyenBUS.tinhDiem(
+                                                                ts,
+                                                                maNganh,
+                                                                th.getMaToHop(),
+                                                                phuongThucNV,
+                                                                nv.getThuTuNV());
+
+                                                ketQuaNganh.add(kq);
+                                        }
+
+                                        best = xetTuyenBUS.getToHopCaoNhat(
+                                                        ketQuaNganh);
                                 }
-
-                                XetTuyenBUS.KetQuaXetTuyen best = xetTuyenBUS.getToHopCaoNhat(
-                                                ketQuaNganh);
 
                                 if (best == null) {
                                         continue;
@@ -356,6 +390,7 @@ public class XetTuyenPanel extends JPanel {
                                                 stt++,
                                                 best.cccd,
                                                 best.tenNganh,
+                                                best.phuongThuc,
                                                 best.toHop,
                                                 best.diemTHXT,
                                                 best.diemCong,
@@ -609,7 +644,7 @@ public class XetTuyenPanel extends JPanel {
                 int rot = 0;
 
                 String phuongThuc = getPhuongThucSelected();
-
+                boolean auto = "AUTO".equalsIgnoreCase(phuongThuc);
                 try (Connection conn = DB.getConn()) {
 
                         NguyenVongDAO nvDAO = new NguyenVongDAO(conn);
@@ -692,33 +727,63 @@ public class XetTuyenPanel extends JPanel {
 
                                         String phuongThucNV = phuongThuc;
 
-                                        DiemThiDTO diem = diemByKey.get(cccd + "|" + phuongThucNV);
-                                        if (diem == null) {
-                                                diem = diemByCccd.get(cccd);
+                                        DiemThiDTO diem = null;
+
+                                        if (!auto) {
+
+                                                diem = diemByKey.get(
+                                                                cccd + "|" + phuongThucNV);
+
+                                                if (diem == null) {
+                                                        continue;
+                                                }
                                         }
 
-                                        if (diem == null) {
-                                                continue;
-                                        }
+                                        XetTuyenBUS.KetQuaXetTuyen best;
 
-                                        List<XetTuyenBUS.KetQuaXetTuyen> ketQuaNganh = new ArrayList<>();
+                                        if (auto) {
+                                                Map<String, DiemThiDTO> diemByPT = new HashMap<>();
 
-                                        for (NganhToHopDTO th : dsToHopNganh) {
-                                                XetTuyenBUS.KetQuaXetTuyen kq = xetTuyenBUS.tinhDiemCached(
+                                                diemByPT.put(
+                                                                "THPT",
+                                                                diemByKey.get(cccd + "|THPT"));
+
+                                                diemByPT.put(
+                                                                "DGNL",
+                                                                diemByKey.get(cccd + "|DGNL"));
+
+                                                diemByPT.put(
+                                                                "VSAT",
+                                                                diemByKey.get(cccd + "|VSAT"));
+                                                best = xetTuyenBUS.xetTuyenCaoNhat(
                                                                 ts,
                                                                 maNganh,
-                                                                th.getMaToHop(),
+                                                                nv.getThuTuNV(),
                                                                 nganh,
-                                                                th,
-                                                                diem,
-                                                                phuongThucNV,
-                                                                nv.getThuTuNV());
+                                                                dsToHopNganh,
+                                                                diemByPT);
+                                        } else {
 
-                                                ketQuaNganh.add(kq);
+                                                List<XetTuyenBUS.KetQuaXetTuyen> ketQuaNganh = new ArrayList<>();
+
+                                                for (NganhToHopDTO th : dsToHopNganh) {
+
+                                                        XetTuyenBUS.KetQuaXetTuyen kq = xetTuyenBUS.tinhDiemCached(
+                                                                        ts,
+                                                                        maNganh,
+                                                                        th.getMaToHop(),
+                                                                        nganh,
+                                                                        th,
+                                                                        diem,
+                                                                        phuongThucNV,
+                                                                        nv.getThuTuNV());
+
+                                                        ketQuaNganh.add(kq);
+                                                }
+
+                                                best = xetTuyenBUS.getToHopCaoNhat(
+                                                                ketQuaNganh);
                                         }
-
-                                        XetTuyenBUS.KetQuaXetTuyen best = xetTuyenBUS.getToHopCaoNhat(
-                                                        ketQuaNganh);
 
                                         if (best == null) {
                                                 continue;
@@ -736,7 +801,7 @@ public class XetTuyenPanel extends JPanel {
                                                         best.diemXetTuyen,
                                                         nv.getKeys(),
                                                         nv.getToHopMon(),
-                                                        phuongThucNV);
+                                                        best.phuongThuc);
 
                                         allNV.add(cand);
                                         nvByCccd.computeIfAbsent(cccd, k -> new ArrayList<>())
@@ -902,6 +967,7 @@ public class XetTuyenPanel extends JPanel {
                                         rows.add(new Object[] {
                                                         nv.getCccd(),
                                                         tenNganh,
+                                                        nv.getPhuongThuc(),
                                                         nv.getToHopMon(),
                                                         nv.getDiemTHXT(),
                                                         nv.getDiemCong(),
@@ -1067,6 +1133,7 @@ public class XetTuyenPanel extends JPanel {
                                                 stt++,
                                                 nv.getCccd(),
                                                 hienThiNganh,
+                                                nv.getPhuongThuc(),
                                                 nv.getToHopMon(),
                                                 nv.getDiemTHXT(),
                                                 nv.getDiemCong(),
@@ -1136,6 +1203,134 @@ public class XetTuyenPanel extends JPanel {
 
                 private static XetTatCaResult error(String message) {
                         return new XetTatCaResult(message);
+                }
+        }
+
+        private void xetMotThiSinhAuto() {
+
+                String cccd = txtCCCD.getText().trim();
+
+                if (cccd.isEmpty()) {
+
+                        JOptionPane.showMessageDialog(
+                                        this,
+                                        "Nhập CCCD");
+
+                        return;
+                }
+
+                ThiSinhDTO ts = thiSinhBUS.getByCCCD(cccd);
+
+                if (ts == null) {
+
+                        JOptionPane.showMessageDialog(
+                                        this,
+                                        "Không tìm thấy thí sinh");
+
+                        return;
+                }
+
+                model.setRowCount(0);
+
+                int stt = 1;
+
+                try {
+
+                        Connection conn = DB.getConn();
+
+                        NguyenVongDAO nvDAO = new NguyenVongDAO(conn);
+
+                        List<NguyenVongDTO> nvList = nvDAO.getByCCCDOrderNV(cccd);
+
+                        int trung = 0;
+                        int rot = 0;
+
+                        boolean daTrung = false;
+
+                        for (NguyenVongDTO nv : nvList) {
+
+                                if (daTrung) {
+
+                                        model.addRow(new Object[] {
+                                                        stt++,
+                                                        ts.getCccd(),
+                                                        nv.getMaNganh(),
+                                                        "",
+                                                        "",
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        "Bỏ",
+                                                        "Nguyện vọng trước đã trúng tuyển"
+                                        });
+
+                                        continue;
+                                }
+
+                                String maNganh = nv.getMaNganh();
+
+                                NganhDTO nganh = nganhBUS.getByMaNganh(maNganh);
+
+                                List<NganhToHopDTO> dsToHopNganh = nganhToHopDAO.getByMaNganh(maNganh);
+
+                                Map<String, DiemThiDTO> diemByPT = diemByCccdAndPT.get(cccd);
+
+                                if (diemByPT == null) {
+                                        continue;
+                                }
+
+                                XetTuyenBUS.KetQuaXetTuyen best = xetTuyenBUS.xetTuyenCaoNhat(
+                                                ts,
+                                                maNganh,
+                                                nv.getThuTuNV(),
+                                                nganh,
+                                                dsToHopNganh,
+                                                diemByPT);
+
+                                if (best == null) {
+                                        continue;
+                                }
+
+                                if (best.trungTuyen) {
+                                        trung++;
+                                        daTrung = true;
+                                } else {
+                                        rot++;
+                                }
+
+                                model.addRow(new Object[] {
+                                                stt++,
+                                                best.cccd,
+                                                best.tenNganh,
+                                                best.phuongThuc,
+                                                best.toHop,
+                                                best.diemTHXT,
+                                                best.diemCong,
+                                                best.diemUT,
+                                                best.diemXetTuyen,
+                                                best.trungTuyen
+                                                                ? "Trúng tuyển"
+                                                                : "Không trúng",
+                                                best.lyDo
+                                });
+                        }
+
+                        lblTong.setText("1");
+                        lblTrungTuyen.setText(
+                                        String.valueOf(trung));
+                        lblKhongTrung.setText(
+                                        String.valueOf(rot));
+
+                        conn.close();
+
+                } catch (Exception e) {
+
+                        e.printStackTrace();
+
+                        JOptionPane.showMessageDialog(
+                                        this,
+                                        "Lỗi xét tuyển");
                 }
         }
 
