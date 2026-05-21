@@ -170,4 +170,16 @@ public class NganhBUS {
 
         return null;
     }
+    public NganhDTO getById(String maNganh) {
+        List<NganhDTO> ds = getAll();
+
+        if (ds == null) return null;
+
+        for (NganhDTO n : ds) {
+            if (maNganh != null && maNganh.equals(n.getMaNganh())) {
+                return n;
+            }
+        }
+        return null;
+    }
 }

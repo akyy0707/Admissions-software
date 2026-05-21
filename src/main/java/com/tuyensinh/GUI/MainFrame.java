@@ -86,7 +86,7 @@ public class MainFrame extends JFrame {
 
         String[] menus = {
                 "Trang chủ", "Người dùng", "Ngành", "Tổ hợp", "Ngành - Tổ hợp",
-                "Thí sinh", "Điểm thi", "Điểm cộng", "Nguyện vọng", "Xét tuyển"
+                "Thí sinh", "Điểm thi", "Điểm cộng", "Nguyện vọng", "Xét tuyển", "Danh sách trúng tuyển"
         };
 
         for (String menuName : menus) {
@@ -202,6 +202,7 @@ public class MainFrame extends JFrame {
         mainContent.add(new DiemCongPanel(), "Điểm cộng");
         mainContent.add(new NguyenVongPanel(), "Nguyện vọng");
         mainContent.add(new XetTuyenPanel(), "Xét tuyển");
+        mainContent.add(new NganhTrungTuyenPanel(), "Danh sách trúng tuyển");
 
         // ================= LẮP RÁP =================
         JPanel rightPanel = new JPanel(new BorderLayout());

@@ -395,6 +395,70 @@ public class NguyenVongDAO {
         }
 
         // =========================================================
+        // GET BY MANGANH AND KETQUA
+        // =========================================================
+        public List<NguyenVongDTO> getByMaNganhAndKetQua(String maNganh, String ketQua) {
+
+                List<NguyenVongDTO> list = new ArrayList<>();
+
+                try {
+
+                        String sql = """
+                                        SELECT
+                                                nv.idnv,
+                                                nv.nn_cccd,
+                                                nv.nv_manganh,
+                                                nv.nv_tt,
+                                                nv.diem_thxt,
+                                                nv.diem_cong,
+                                                nv.diem_utqd,
+                                                nv.diem_xettuyen,
+                                                nv.nv_ketqua,
+                                                nv.nv_keys,
+                                                nv.tt_phuongthuc,
+                                                nv.tt_thm
+                                        FROM xt_nguyenvongxettuyen nv
+                                        WHERE nv.nv_manganh = ? AND nv.nv_ketqua = ?
+                                        ORDER BY nv.diem_xettuyen DESC, nv.nn_cccd ASC
+                                        """;
+
+                        PreparedStatement ps = conn.prepareStatement(sql);
+                        ps.setString(1, maNganh);
+                        ps.setString(2, ketQua);
+
+                        ResultSet rs = ps.executeQuery();
+
+                        while (rs.next()) {
+
+                                NguyenVongDTO nv = new NguyenVongDTO();
+
+                                nv.setIdnv(rs.getInt("idnv"));
+                                nv.setCccd(rs.getString("nn_cccd"));
+                                nv.setMaNganh(rs.getString("nv_manganh"));
+                                nv.setThuTuNV(rs.getInt("nv_tt"));
+                                nv.setDiemTHXT(rs.getDouble("diem_thxt"));
+                                nv.setDiemCong(rs.getDouble("diem_cong"));
+                                nv.setDiemUTQD(rs.getDouble("diem_utqd"));
+                                nv.setDiemXetTuyen(rs.getDouble("diem_xettuyen"));
+                                nv.setKetQua(rs.getString("nv_ketqua"));
+                                nv.setKeys(rs.getString("nv_keys"));
+                                nv.setPhuongThuc(rs.getString("tt_phuongthuc"));
+                                nv.setToHopMon(rs.getString("tt_thm"));
+
+                                list.add(nv);
+                        }
+
+                        ps.close();
+
+                } catch (Exception e) {
+
+                        e.printStackTrace();
+                }
+
+                return list;
+        }
+
+        // =========================================================
         // DELETE
         // =========================================================
         public boolean delete(int id) {
