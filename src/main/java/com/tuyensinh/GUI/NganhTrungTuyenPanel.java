@@ -1,5 +1,4 @@
 package com.tuyensinh.GUI;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -9,6 +8,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -24,6 +26,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.tuyensinh.BUS.NganhBUS;
 import com.tuyensinh.BUS.ThiSinhBUS;
@@ -117,7 +125,7 @@ public class NganhTrungTuyenPanel extends JPanel {
         toolbar.add(lblNganh);
         toolbar.add(cboNganh);
         toolbar.add(btnXem);
-        // toolbar.add(btnXuatExcel);
+        toolbar.add(btnXuatExcel);
 
         tablePanel.add(toolbar, BorderLayout.NORTH);
 
@@ -270,14 +278,67 @@ public class NganhTrungTuyenPanel extends JPanel {
     }
 
     private void xuatExcel() {
-        int index = cboNganh.getSelectedIndex();
-        if (index <= 0 || model.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngành và tải dữ liệu trước");
-            return;
+
+    int index = cboNganh.getSelectedIndex();
+
+    if (index <= 0 || model.getRowCount() == 0) {
+        JOptionPane.showMessageDialog(this,
+                "Vui lòng chọn ngành và tải dữ liệu trước");
+        return;
+    }
+
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setSelectedFile(new File("ketqua_xettuyen.xlsx"));
+
+    int option = fileChooser.showSaveDialog(this);
+    if (option != JFileChooser.APPROVE_OPTION) {
+        return;
+    }
+
+    File file = fileChooser.getSelectedFile();
+
+    try (Workbook workbook = new XSSFWorkbook()) {
+
+        Sheet sheet = workbook.createSheet("Kết quả xét tuyển");
+
+        // ===== HEADER =====
+        Row header = sheet.createRow(0);
+
+        for (int i = 0; i < model.getColumnCount(); i++) {
+            Cell cell = header.createCell(i);
+            cell.setCellValue(model.getColumnName(i));
         }
 
-        JOptionPane.showMessageDialog(this, "Tính năng xuất Excel sẽ được phát triển sau");
+        // ===== DATA =====
+        for (int i = 0; i < model.getRowCount(); i++) {
+            Row row = sheet.createRow(i + 1);
+
+            for (int j = 0; j < model.getColumnCount(); j++) {
+                Object value = model.getValueAt(i, j);
+                row.createCell(j).setCellValue(
+                        value == null ? "" : value.toString()
+                );
+            }
+        }
+
+        // Auto size column
+        for (int i = 0; i < model.getColumnCount(); i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            workbook.write(fos);
+        }
+
+        JOptionPane.showMessageDialog(this,
+                "Xuất Excel thành công!\n" + file.getAbsolutePath());
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+                "Lỗi xuất Excel: " + e.getMessage());
     }
+}
 
     // RoundedPanel helper class
     class RoundedPanel extends JPanel {
