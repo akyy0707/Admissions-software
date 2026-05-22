@@ -8,6 +8,6 @@ public class DB {
         return DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/xettuyen2026",
                 "root",
-                "anhtuan2407");
+                "");
     }
 }
