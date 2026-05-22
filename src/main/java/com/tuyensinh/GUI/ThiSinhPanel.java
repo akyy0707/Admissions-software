@@ -28,8 +28,8 @@ public class ThiSinhPanel extends JPanel {
     private JButton btnSearch, btnAdd, btnDelete, btnRefresh, btnStats, btnDetail, btnScores;
 
     private JLabel lblTongThiSinh;
-    private JLabel lblDoiTuongSummary;
-    private JLabel lblKhuVucSummary;
+    private JTextArea lblDoiTuongSummary;
+    private JTextArea lblKhuVucSummary;
 
     private int currentPage = 1;
     private final int pageSize = 25;
@@ -75,8 +75,8 @@ public class ThiSinhPanel extends JPanel {
         panel.setOpaque(false);
 
         lblTongThiSinh = new JLabel("0");
-        lblDoiTuongSummary = new JLabel("...");
-        lblKhuVucSummary = new JLabel("...");
+        lblDoiTuongSummary = createStatTextArea();
+        lblKhuVucSummary = createStatTextArea();
 
         panel.add(createStatCard("Tổng Thí Sinh", lblTongThiSinh, new Color(41, 128, 185), 34));
         panel.add(createStatCard("Theo Đối Tượng", lblDoiTuongSummary, new Color(39, 174, 96), 13));
@@ -85,7 +85,18 @@ public class ThiSinhPanel extends JPanel {
         return panel;
     }
 
-    private JPanel createStatCard(String title, JLabel valueLabel, Color color, int valueSize) {
+    private JTextArea createStatTextArea() {
+        JTextArea area = new JTextArea();
+        area.setEditable(false);
+        area.setOpaque(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        area.setForeground(new Color(60, 60, 60));
+        return area;
+    }
+
+    private JPanel createStatCard(String title, JComponent valueComponent, Color color, int valueSize) {
         RoundedPanel card = new RoundedPanel(20, Color.WHITE);
         card.setLayout(new BorderLayout());
         card.setBorder(new EmptyBorder(18, 20, 18, 20));
@@ -94,11 +105,18 @@ public class ThiSinhPanel extends JPanel {
         lblTitle.setForeground(new Color(130, 130, 130));
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-        valueLabel.setForeground(color);
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, valueSize));
+        if (valueComponent instanceof JLabel label) {
+            label.setForeground(color);
+            label.setFont(new Font("Segoe UI", Font.BOLD, valueSize));
+        }
+
+        if (valueComponent instanceof JTextArea area) {
+            area.setForeground(color);
+            area.setFont(new Font("Segoe UI", Font.BOLD, valueSize));
+        }
 
         card.add(lblTitle, BorderLayout.NORTH);
-        card.add(valueLabel, BorderLayout.CENTER);
+        card.add(valueComponent, BorderLayout.CENTER);
 
         return card;
     }
@@ -125,8 +143,7 @@ public class ThiSinhPanel extends JPanel {
         txtSearch.setPreferredSize(new Dimension(200, 38));
         txtSearch.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200)),
-                new EmptyBorder(5, 10, 5, 10)
-        ));
+                new EmptyBorder(5, 10, 5, 10)));
 
         btnSearch = createFlatButton("Tìm", new Color(149, 165, 166), new Color(127, 140, 141));
         btnSearch.setPreferredSize(new Dimension(80, 38));
@@ -161,7 +178,8 @@ public class ThiSinhPanel extends JPanel {
         mainPanel.add(toolBar, BorderLayout.NORTH);
 
         // ===== BẢNG DỮ LIỆU =====
-        String[] columns = {"ID", "Số Báo Danh", "Họ", "Tên", "CCCD", "Ngày Sinh", "Giới Tính", "Điện Thoại", "Email"};
+        String[] columns = { "ID", "Số Báo Danh", "Họ", "Tên", "CCCD", "Ngày Sinh", "Giới Tính", "Đối Tượng",
+                "Khu Vực" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -203,7 +221,10 @@ public class ThiSinhPanel extends JPanel {
         btnDetail.addActionListener(e -> showChiTietThiSinh());
         btnScores.addActionListener(e -> showDiemThiSinh());
         btnStats.addActionListener(e -> showThongKe());
-        btnRefresh.addActionListener(e -> { txtSearch.setText(""); loadData(); });
+        btnRefresh.addActionListener(e -> {
+            txtSearch.setText("");
+            loadData();
+        });
 
         return mainPanel;
     }
@@ -220,8 +241,13 @@ public class ThiSinhPanel extends JPanel {
         btn.setPreferredSize(new Dimension(110, 38));
 
         btn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent evt) { btn.setBackground(hoverColor); }
-            public void mouseExited(MouseEvent evt) { btn.setBackground(bgColor); }
+            public void mouseEntered(MouseEvent evt) {
+                btn.setBackground(hoverColor);
+            }
+
+            public void mouseExited(MouseEvent evt) {
+                btn.setBackground(bgColor);
+            }
         });
         return btn;
     }
@@ -291,10 +317,13 @@ public class ThiSinhPanel extends JPanel {
         }
 
         for (ThiSinhDTO ts : list) {
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     ts.getId(), ts.getSoBaoDanh(), ts.getHo(), ts.getTen(),
-                    ts.getCccd(), ts.getNgaySinh() != null ? new SimpleDateFormat("dd/MM/yyyy").format(ts.getNgaySinh()) : "",
-                    ts.getGioiTinh(), ts.getDienThoai(), ts.getEmail()
+                    ts.getCccd(),
+                    ts.getNgaySinh() != null ? new SimpleDateFormat("dd/MM/yyyy").format(ts.getNgaySinh()) : "",
+                    ts.getGioiTinh(), 
+                    ts.getDoiTuong(),
+                    ts.getKhuVuc()
             });
         }
 
@@ -317,33 +346,24 @@ public class ThiSinhPanel extends JPanel {
         Map<String, Long> theoKhuVuc = tsBUS.countByKhuVuc();
 
         lblTongThiSinh.setText(String.format("%,d", total));
-        lblDoiTuongSummary.setText(formatSummary(theoDoiTuong, 3));
-        lblKhuVucSummary.setText(formatSummary(theoKhuVuc, 3));
+        lblDoiTuongSummary.setText(formatSummary(theoDoiTuong));
+        lblKhuVucSummary.setText(formatSummary(theoKhuVuc));
     }
 
-    private String formatSummary(Map<String, Long> map, int maxItems) {
+    private String formatSummary(Map<String, Long> map) {
         if (map == null || map.isEmpty()) {
             return "Chưa có dữ liệu";
         }
 
-        StringBuilder sb = new StringBuilder("<html>");
-        int index = 0;
+        StringBuilder sb = new StringBuilder();
+
         for (Map.Entry<String, Long> entry : map.entrySet()) {
-            if (index >= maxItems) {
-                break;
-            }
-            if (index > 0) {
-                sb.append("<br>");
-            }
-            sb.append(entry.getKey()).append(": ").append(entry.getValue());
-            index++;
+            sb.append(entry.getKey())
+                    .append(": ")
+                    .append(entry.getValue())
+                    .append("\n");
         }
 
-        if (map.size() > maxItems) {
-            sb.append("<br>+").append(map.size() - maxItems).append(" khác");
-        }
-
-        sb.append("</html>");
         return sb.toString();
     }
 
@@ -354,7 +374,8 @@ public class ThiSinhPanel extends JPanel {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa thí sinh này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa thí sinh này?", "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             int id = (int) tableModel.getValueAt(row, 0);
             if (tsBUS.delete(id)) {
@@ -429,7 +450,7 @@ public class ThiSinhPanel extends JPanel {
         JLabel lblSubtitle = new JLabel("Số báo danh: " + ts.getSoBaoDanh());
         lblSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblSubtitle.setForeground(new Color(200, 230, 255));
-        
+
         JPanel headerContent = new JPanel(new BorderLayout());
         headerContent.setOpaque(false);
         headerContent.add(lblTitle, BorderLayout.NORTH);
@@ -443,7 +464,8 @@ public class ThiSinhPanel extends JPanel {
         bodyPanel.setBackground(Color.WHITE);
         bodyPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
 
-        String ngaySinh = ts.getNgaySinh() != null ? new SimpleDateFormat("dd/MM/yyyy").format(ts.getNgaySinh()) : "N/A";
+        String ngaySinh = ts.getNgaySinh() != null ? new SimpleDateFormat("dd/MM/yyyy").format(ts.getNgaySinh())
+                : "N/A";
 
         bodyPanel.add(createInfoRow("Họ:", ts.getHo()));
         bodyPanel.add(createInfoRow("Tên:", ts.getTen()));
@@ -480,7 +502,7 @@ public class ThiSinhPanel extends JPanel {
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         row.setBorder(new EmptyBorder(5, 15, 5, 15));
-        
+
         JLabel lblLabel = new JLabel(label);
         lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblLabel.setForeground(new Color(80, 80, 80));
@@ -493,7 +515,7 @@ public class ThiSinhPanel extends JPanel {
         row.add(lblLabel, BorderLayout.WEST);
         row.add(lblValue, BorderLayout.CENTER);
         row.setBackground(new Color(248, 249, 250));
-        
+
         return row;
     }
 
@@ -507,7 +529,8 @@ public class ThiSinhPanel extends JPanel {
         String cccd = (String) tableModel.getValueAt(selectedRow, 4);
         DiemThiDTO diem = diemThiBUS.getByCCCD(cccd);
         if (diem == null) {
-            JOptionPane.showMessageDialog(this, "Chưa có dữ liệu điểm cho thí sinh này!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Chưa có dữ liệu điểm cho thí sinh này!", "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -516,9 +539,11 @@ public class ThiSinhPanel extends JPanel {
         sb.append("Toán: ").append(diem.getTo()).append("  |  Văn: ").append(diem.getVa())
                 .append("  |  Lý: ").append(diem.getLi()).append("  |  Hóa: ").append(diem.getHo()).append("\n");
         sb.append("Sinh: ").append(diem.getSi()).append("  |  Sử: ").append(diem.getSu())
-                .append("  |  Địa: ").append(diem.getDi()).append("  |  Ngoại ngữ: ").append(diem.getN1_thi()).append("\n");
+                .append("  |  Địa: ").append(diem.getDi()).append("  |  Ngoại ngữ: ").append(diem.getN1_thi())
+                .append("\n");
         sb.append("KTPL: ").append(diem.getKtpl()).append("  |  Tin: ").append(diem.getTi())
-                .append("  |  CNCN: ").append(diem.getCncn()).append("  |  CNNN: ").append(diem.getCnnn()).append("\n\n");
+                .append("  |  CNCN: ").append(diem.getCncn()).append("  |  CNNN: ").append(diem.getCnnn())
+                .append("\n\n");
 
         sb.append("ĐIỂM ĐGNL: ").append(diem.getNl1() > 0 ? diem.getNl1() : "Chưa có").append("\n\n");
         sb.append("ĐIỂM VSAT: ").append(diem.getNk1() > 0 || diem.getNk2() > 0
@@ -589,7 +614,8 @@ public class ThiSinhPanel extends JPanel {
                 String ho = txtHo.getText().trim();
                 String ten = txtTen.getText().trim();
                 if (ho.isEmpty() || ten.isEmpty()) {
-                    JOptionPane.showMessageDialog(dialog, "Họ và Tên không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialog, "Họ và Tên không được để trống!", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -611,14 +637,17 @@ public class ThiSinhPanel extends JPanel {
                 ts.setEmail(txtEmail.getText().trim());
 
                 if (tsBUS.insert(ts)) {
-                    JOptionPane.showMessageDialog(dialog, "Thêm thí sinh thành công!", "Hoàn tất", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(dialog, "Thêm thí sinh thành công!", "Hoàn tất",
+                            JOptionPane.INFORMATION_MESSAGE);
                     dialog.dispose();
                     loadData();
                 } else {
-                    JOptionPane.showMessageDialog(dialog, "Thêm thất bại. Vui lòng kiểm tra lại thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialog, "Thêm thất bại. Vui lòng kiểm tra lại thông tin!", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(dialog, "Sai định dạng ngày sinh! Vui lòng nhập theo chuẩn dd/MM/yyyy", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Sai định dạng ngày sinh! Vui lòng nhập theo chuẩn dd/MM/yyyy",
+                        "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -648,8 +677,7 @@ public class ThiSinhPanel extends JPanel {
         txt.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txt.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(5, 10, 5, 10)
-        ));
+                new EmptyBorder(5, 10, 5, 10)));
         return txt;
     }
 
@@ -670,19 +698,19 @@ public class ThiSinhPanel extends JPanel {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
+
             // Đổ bóng nhẹ
             g2.setColor(new Color(230, 230, 230));
             g2.fillRoundRect(3, 3, getWidth() - 3, getHeight() - 3, cornerRadius, cornerRadius);
-            
+
             // Vẽ nền
             g2.setColor(backgroundColor);
             g2.fillRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
-            
+
             // Vẽ viền
             g2.setColor(new Color(225, 225, 225));
             g2.drawRoundRect(0, 0, getWidth() - 4, getHeight() - 4, cornerRadius, cornerRadius);
-            
+
             g2.dispose();
         }
     }
